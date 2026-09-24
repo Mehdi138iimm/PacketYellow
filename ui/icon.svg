@@ -1,0 +1,46 @@
+<svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- gradient definitions -->
+  <defs>
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ffed4e;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ffff88;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#ffd700;stop-opacity:0.1" />
+    </radialGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- background glow -->
+  <circle cx="128" cy="128" r="120" fill="url(#glow)"/>
+  
+  <!-- main square with gradient -->
+  <rect x="48" y="48" width="160" height="160" rx="24" fill="url(#grad1)" filter="url(#shadow)"/>
+  
+  <!-- lightning bolt / signal lines (动态感) -->
+  <g stroke="#e6c200" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none" opacity="0.7">
+    <polyline points="140,100 140,140 160,140"/>
+    <polyline points="120,120 100,140"/>
+    <polyline points="160,100 180,120"/>
+  </g>
+  
+  <!-- center dot / connection point -->
+  <circle cx="128" cy="128" r="12" fill="#e6c200" opacity="0.8" filter="url(#shadow)"/>
+  
+  <!-- speed lines -->
+  <g stroke="#e6c200" stroke-width="4" stroke-linecap="round" opacity="0.6">
+    <line x1="75" y1="110" x2="65" y2="100"/>
+    <line x1="75" y1="148" x2="65" y2="158"/>
+    <line x1="181" y1="110" x2="191" y2="100"/>
+    <line x1="181" y1="148" x2="191" y2="158"/>
+  </g>
+  
+  <!-- corner accents -->
+  <circle cx="70" cy="70" r="6" fill="#ffff88" opacity="0.5"/>
+  <circle cx="186" cy="70" r="6" fill="#ffff88" opacity="0.5"/>
+  <circle cx="70" cy="186" r="6" fill="#ffff88" opacity="0.5"/>
+  <circle cx="186" cy="186" r="6" fill="#ffff88" opacity="0.5"/>
+</svg>

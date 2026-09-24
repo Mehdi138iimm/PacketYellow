@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PacketYellow</title>
+<!-- local copies first (run `npm run vendor` once), CDN as fallback -->
+<link rel="stylesheet" href="vendor/fonts.css" onerror="this.remove()">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<script src="vendor/lucide.min.js" onerror="var s=document.createElement('script');s.src='https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js';s.onload=function(){window.lucide&&lucide.createIcons()};document.head.appendChild(s)"></script>
+</head>
+<body>
+
+<div id="splash" aria-hidden="true">
+  <div class="sp-mark"><i data-lucide="zap" width="34" height="34"></i></div>
+  <b class="sp-name">Packet<span>Yellow</span></b>
+  <div class="sp-bars"><span></span><span></span><span></span><span></span><span></span></div>
+  <small>در حال آماده‌سازی هسته‌ی شبکه</small>
+</div>
+
+<div class="app">
+
+<header class="titlebar" data-tauri-drag-region>
+  <div class="win">
+    <button aria-label="کوچک کردن" data-win="minimize"><i data-lucide="minus" width="15" height="15"></i></button>
+    <button aria-label="بستن" class="x" data-win="close"><i data-lucide="x" width="15" height="15"></i></button>
+  </div>
+  <div class="logo" data-tauri-drag-region><img src="icon.svg" alt="PacketYellow" class="logo-icon" style="width:26px;height:26px;"><b>Packet<span>Yellow</span></b></div>
+  <div class="pills" data-tauri-drag-region>
+    <span class="pill"><span class="sdot" id="hdot"></span><span id="hstat">در حال اتصال</span></span>
+    <span class="pill"><i data-lucide="building-2" width="14" height="14"></i><span id="hisp">...</span></span>
+    <span class="pill"><i data-lucide="map-pin" width="14" height="14"></i><span id="hloc">...</span></span>
+    <span class="pill vpn" id="hvpn" hidden><i data-lucide="shield-check" width="14" height="14"></i>VPN</span>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="side" role="tablist" aria-orientation="vertical">
+    <span class="sec">پایش</span>
+    <button class="nb" role="tab" data-tab="dash"><i data-lucide="activity" width="17" height="17"></i>داشبورد زنده<span class="k">1</span></button>
+    <button class="nb" role="tab" data-tab="sites"><i data-lucide="globe" width="17" height="17"></i>تست سایت‌ها<span class="k">2</span></button>
+    <button class="nb" role="tab" data-tab="games"><i data-lucide="gamepad-2" width="17" height="17"></i>پینگ بازی‌ها<span class="k">3</span></button>
+    <button class="nb" role="tab" data-tab="speed"><i data-lucide="gauge" width="17" height="17"></i>تست سرعت<span class="k">4</span></button>
+    <span class="sec">اتصال</span>
+    <button class="nb" role="tab" data-tab="tunnel"><i data-lucide="waypoints" width="17" height="17"></i>سرورهای تونل<span class="k">5</span></button>
+    <button class="nb" role="tab" data-tab="dns"><i data-lucide="search-code" width="17" height="17"></i>تست DNS<span class="k">6</span></button>
+    <button class="nb" role="tab" data-tab="net"><i data-lucide="network" width="17" height="17"></i>اطلاعات شبکه<span class="k">7</span></button>
+    <span class="sec">کمک</span>
+    <button class="nb" role="tab" data-tab="guide"><i data-lucide="book-open" width="17" height="17"></i>راهنما<span class="k">8</span></button>
+    <button class="nb" role="tab" data-tab="logs"><i data-lucide="scroll-text" width="17" height="17"></i>لاگ<span class="lbadge" id="logBadge" hidden></span><span class="k">9</span></button>
+
+    <div class="live-mini" aria-live="polite">
+      <div class="v"><span class="num" id="mPing">--</span><small>ms</small><span class="mode-tag" id="mMode">TCP</span></div>
+      <svg class="spark" id="spark" viewBox="0 0 200 28" preserveAspectRatio="none"><polyline points=""/></svg>
+      <div class="kv"><span>جیتر</span><span class="num" id="mJit">--</span></div>
+      <div class="kv"><span>پکت لاس</span><span class="num" id="mLoss">--</span></div>
+    </div>
+  </aside>
+
+  <main>
+    <!-- DASHBOARD -->
+    <section class="tab" id="tab-dash">
+      <div class="head"><h1>داشبورد زنده</h1>
+        <div class="seg" id="modeSeg" role="radiogroup" aria-label="روش سنجش">
+          <button data-m="tcp" role="radio">TCP</button>
+          <button data-m="http" role="radio">HTTP · مناسب VPN</button>
+        </div>
+        <button class="btn" id="monToggle"><i data-lucide="pause" width="15" height="15"></i><span>توقف</span></button>
+      </div>
+      <div class="hint" id="vpnHint" hidden><i data-lucide="shield-alert" width="17" height="17"></i><span>VPN روشنه. توی حالت TCP پینگ ممکنه غیرواقعی (خیلی کم یا خیلی زیاد) باشه. حالت HTTP از داخل تونل می‌سنجه.</span><button class="btn y sm" id="vpnHintBtn">برو روی HTTP</button></div>
+      <div class="readout">
+        <div class="now"><span class="num" id="dNow">--</span><small>ms</small></div>
+        <div class="st"><span class="num" id="dAvg">--</span><span>میانگین</span></div>
+        <div class="st"><span class="num" id="dMed">--</span><span>میانه</span></div>
+        <div class="st"><span class="num" id="dJit">--</span><span>جیتر</span></div>
+        <div class="st"><span class="num" id="dLoss">--</span><span>پکت لاس</span></div>
+        <div class="st"><span class="num" id="dMM">--</span><span>کمینه / بیشینه</span></div>
+        <div class="verdict"><b id="vTitle">در حال سنجش</b><span id="vSub">چند ثانیه صبر کن</span></div>
+      </div>
+      <div class="dash-grid">
+        <div class="panel">
+          <div class="label"><span id="chartTarget"></span><span class="r num" id="chartScale"></span></div>
+          <div class="chart-box">
+            <svg class="chart" id="chart" viewBox="0 0 1000 220" preserveAspectRatio="none" role="img" aria-label="نمودار پینگ"></svg>
+            <div class="chart-axis" id="chartAxis"></div>
+          </div>
+          <div class="chart-foot"><span>۹۰ ثانیه پیش</span><span>الان</span></div>
+        </div>
+        <div class="panel">
+          <div class="label">آخرین نمونه‌ها</div>
+          <ul class="log" id="log"></ul>
+        </div>
+      </div>
+      <div class="label">هدف سنجش <span class="r" id="modeNote">پینگ TCP از هسته‌ی Rust</span></div>
+      <div class="targets" id="targets"></div>
+      <div class="field" style="margin-top:12px;max-width:560px"><input class="in fa-ph" id="tgtIn" placeholder="هدف دلخواه: host:port یا https://..." aria-label="هدف دلخواه"><button class="btn" id="tgtAdd"><i data-lucide="crosshair" width="15" height="15"></i>تنظیم</button></div>
+    </section>
+
+    <!-- SITES -->
+    <section class="tab" id="tab-sites">
+      <div class="head"><h1>تست سایت‌ها</h1><p>برای هر سایت: DNS، پینگ، زمان پاسخ و دلیل دقیق باز نشدن (فیلتر DNS، فیلتر SNI، تحریم، قطعی).</p></div>
+      <div class="field"><input class="in" id="siteIn" placeholder="example.com" aria-label="آدرس سایت"><button class="btn y" id="siteAdd"><i data-lucide="plus" width="15" height="15"></i>اضافه</button></div>
+      <div class="chips" id="siteQuick"></div>
+      <div class="head sub"><span class="label" id="siteSum"></span><button class="btn" id="siteClear"><i data-lucide="trash-2" width="15" height="15"></i>پاک کردن</button><button class="btn y" id="siteRun"><i data-lucide="play" width="15" height="15"></i>تست همه</button></div>
+      <div class="panel tight"><table><thead><tr><th>سایت</th><th>وضعیت</th><th>پینگ</th><th>DNS</th><th>زمان پاسخ</th><th>کد</th><th></th></tr></thead><tbody id="siteRows"></tbody></table></div>
+    </section>
+
+    <!-- GAMES -->
+    <section class="tab" id="tab-games">
+      <div class="head"><h1>پینگ بازی‌ها</h1><p id="gIntro">بازی‌هات رو تیک بزن؛ پینگ تا منطقه‌ی سرورهای هر بازی سنجیده میشه و بهترین منطقه ستاره می‌گیره.</p></div>
+      <div class="games-wrap">
+        <div class="panel gpanel">
+          <input class="in fa-ph" id="gSearch" placeholder="جستجوی بازی..." aria-label="جستجوی بازی">
+          <div class="cats" id="gCats"></div>
+          <div class="label" style="padding:4px 6px 0;margin:8px 0 6px"><span id="gCount"></span><button class="chip-btn r" id="gAll">انتخاب همه</button><button class="chip-btn" id="gNone">هیچ</button></div>
+          <div class="glist" id="glist"></div>
+          <details class="gcustom"><summary>بازی / سرور دلخواه</summary>
+            <div class="field" style="margin:10px 0 0"><input class="in" id="gcName" placeholder="نام" style="font-family:inherit;direction:rtl"><input class="in" id="gcHost" placeholder="host:port"><button class="btn" id="gcAdd"><i data-lucide="plus" width="15" height="15"></i></button></div>
+          </details>
+        </div>
+        <div>
+          <div class="head sub"><span class="label" id="gSum"></span><button class="btn y" id="gRun"><i data-lucide="play" width="15" height="15"></i>تست</button></div>
+          <div class="panel tight"><table><thead><tr><th>بازی / منطقه</th><th>پینگ</th><th></th><th>جیتر</th><th>لاس</th></tr></thead><tbody id="gRows"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPEED -->
+    <section class="tab" id="tab-speed">
+      <div class="head"><h1>تست سرعت</h1><span class="phase" id="spPhase"></span><button class="btn y" id="spRun"><i data-lucide="play" width="15" height="15"></i>شروع تست</button><p>سرور: Cloudflare · ۴ اتصال دانلود و ۳ اتصال آپلود · ۱۰ ثانیه دانلود و ۸ ثانیه آپلود · ثانیه‌های اول (slow-start) حساب نمیشن</p></div>
+      <div class="speed">
+        <div class="panel sp dim" id="spD"><div class="label"><i data-lucide="arrow-down" width="15" height="15"></i>دانلود</div><div class="val"><span class="num" id="spDv">0.0</span><small>Mbps</small></div><div class="track"><span id="spDt"></span></div></div>
+        <div class="panel sp dim" id="spU"><div class="label"><i data-lucide="arrow-up" width="15" height="15"></i>آپلود</div><div class="val"><span class="num" id="spUv">0.0</span><small>Mbps</small></div><div class="track"><span id="spUt"></span></div></div>
+      </div>
+      <div class="srow">
+        <div class="st"><span class="num" id="spLat">--</span><span>تاخیر بی‌بار (ms)</span></div>
+        <div class="st"><span class="num" id="spLoad">--</span><span>تاخیر زیر بار (ms)</span></div>
+        <div class="st"><span class="num" id="spJit">--</span><span>جیتر (ms)</span></div>
+        <div class="st"><span class="num" id="spColo">--</span><span>دیتاسنتر</span></div>
+        <div class="st"><span class="num" id="spData">--</span><span>حجم مصرفی (MB)</span></div>
+        <div class="st"><b id="spGrade">--</b><span>بافربلوت</span></div>
+      </div>
+      <div class="hint sp-err" id="spErr" hidden><i data-lucide="alert-triangle" width="17" height="17"></i><span></span><button class="btn sm" data-goto="logs">دیدن لاگ</button></div>
+      <div class="hist"><div class="label">تست‌های قبلی</div><div class="panel tight"><table><thead><tr><th>زمان</th><th>دانلود</th><th>آپلود</th><th>تاخیر</th><th>جیتر</th><th>دیتاسنتر</th></tr></thead><tbody id="spHist"></tbody></table></div></div>
+    </section>
+
+    <!-- TUNNEL -->
+    <section class="tab" id="tab-tunnel">
+      <div class="head"><h1>سرورهای تونل</h1><p>لینک‌های vless / vmess / trojan / ss / hysteria2 / tuic یا host:port رو هر کدوم تو یه خط بذار.</p></div>
+      <textarea class="in" id="tunIn" rows="6" spellcheck="false" placeholder="vless://uuid@host:443#name"></textarea>
+      <div class="head sub" style="margin-top:14px"><span class="label" id="tunSum"></span><button class="btn y" id="tunRun"><i data-lucide="arrow-down-wide-narrow" width="15" height="15"></i>تست و مرتب‌سازی</button></div>
+      <div class="panel tight"><table><thead><tr><th>سرور</th><th>پروتکل</th><th>پینگ</th><th>جیتر</th><th>لاس</th><th></th></tr></thead><tbody id="tunRows"></tbody></table></div>
+    </section>
+
+    <!-- DNS -->
+    <section class="tab" id="tab-dns">
+      <div class="head"><h1>تست DNS</h1><button class="btn y" id="dnsRun"><i data-lucide="play" width="15" height="15"></i>بنچمارک</button><p>۵ دامنه × ۲ دور برای هر DNS، بدون کش. ستون «پاسخ» نشون میده DNS برای سایت‌های فیلتر، آدرس واقعی میده یا صفحه‌ی فیلتر.</p></div>
+      <div class="field dns-add">
+        <input class="in" id="dnsName" placeholder="نام (اختیاری)" style="font-family:inherit;direction:rtl;max-width:200px">
+        <input class="in" id="dnsIp" placeholder="1.1.1.1  ·  1.1.1.1:5353  ·  [2606:4700::1111]:53">
+        <button class="btn y" id="dnsAdd"><i data-lucide="plus" width="15" height="15"></i>افزودن DNS</button>
+      </div>
+      <div class="panel tight"><table><thead><tr><th>DNS</th><th>میانه</th><th></th><th>کمینه</th><th>موفقیت</th><th>پاسخ</th><th></th></tr></thead><tbody id="dnsRows"></tbody></table></div>
+    </section>
+
+    <!-- NET -->
+    <section class="tab" id="tab-net">
+      <div class="head"><h1>اطلاعات شبکه</h1><button class="btn" id="netRefresh"><i data-lucide="refresh-cw" width="15" height="15"></i>بروزرسانی</button></div>
+      <div class="banner" id="netBanner" hidden></div>
+      <div class="notes" id="netNotes"></div>
+      <div class="net-grid" id="netGrid"></div>
+      <div class="label" style="margin-top:24px">اینترفیس‌ها</div>
+      <div class="panel tight"><table><thead><tr><th>نام</th><th>آدرس</th><th>ماسک</th><th>گیت‌وی</th><th>نوع</th></tr></thead><tbody id="ifRows"></tbody></table></div>
+    </section>
+
+    <!-- GUIDE -->
+    <section class="tab" id="tab-guide">
+      <div class="head"><h1>راهنما</h1><button class="btn y" id="replayOnb"><i data-lucide="sparkles" width="15" height="15"></i>نمایش دوباره‌ی معرفی</button><p>هر چیزی که برای خوندن عددهای PacketYellow لازم داری.</p></div>
+
+      <div class="legend">
+        <div class="lg"><b>پینگ</b><span>زمان رفت و برگشت یه بسته. <em class="good">زیر ۶۰</em> عالی، <em class="warn">۶۰ تا ۱۲۰</em> قابل قبول، <em class="bad">بالای ۱۲۰</em> برای بازی بد.</span></div>
+        <div class="lg"><b>جیتر</b><span>میزان نوسان پینگ. بالای ۲۰ms یعنی لگ‌های لحظه‌ای و صدای قطع‌ووصل تو تماس.</span></div>
+        <div class="lg"><b>پکت لاس</b><span>درصد بسته‌هایی که نرسیدن. هر عددی بالای ۱٪ تو بازی حس میشه.</span></div>
+        <div class="lg"><b>تاخیر زیر بار</b><span>پینگ وقتی خط پره (بافربلوت). اگه خیلی بیشتر از تاخیر بی‌بار باشه، مودمت وقت دانلود لگ می‌سازه.</span></div>
+      </div>
+
+      <details class="gd" open><summary><i data-lucide="activity" width="16" height="16"></i>داشبورد زنده</summary><div>
+        <p>هر ثانیه یه نمونه از هدف انتخاب‌شده گرفته میشه و ۹۰ ثانیه‌ی آخر روی نمودار میاد. خط‌های قرمز یعنی بسته گم شده.</p>
+        <p><b>TCP:</b> زمان دست‌دادن TCP رو می‌سنجه. بدون VPN دقیق‌ترین حالته.<br><b>HTTP · مناسب VPN:</b> روی یه اتصال باز، درخواست کوچیک می‌فرسته. چون از پروکسی/تونل سیستم رد میشه، پینگ واقعی از پشت VPN رو نشون میده.</p>
+        <p>با فیلد «هدف دلخواه» می‌تونی هر آدرسی رو پایش کنی، مثلاً سرور بازی خودت.</p>
+      </div></details>
+
+      <details class="gd"><summary><i data-lucide="globe" width="16" height="16"></i>تست سایت‌ها و معنی هر وضعیت</summary><div>
+        <table class="mini"><tbody>
+          <tr><td><span class="tag ok">باز</span></td><td>سایت کامل جواب داد.</td></tr>
+          <tr><td><span class="tag slow">کُند</span></td><td>باز شد ولی بیشتر از ۲.۵ ثانیه طول کشید.</td></tr>
+          <tr><td><span class="tag slow">تحریم / محدود</span></td><td>سرور جواب داد ولی دسترسی رو بست (کد 403 یا 451)، معمولاً تحریم IP ایران.</td></tr>
+          <tr><td><span class="tag no">فیلتر (DNS)</span></td><td>DNS آدرس 10.10.34.x (صفحه‌ی پیوندها) رو برگردوند.</td></tr>
+          <tr><td><span class="tag no">فیلتر (SNI/TLS)</span></td><td>اتصال TCP برقرار شد ولی موقع HTTPS قطع شد؛ فیلترینگ روی نام دامنه.</td></tr>
+          <tr><td><span class="tag no">اتصال برقرار نشد</span></td><td>حتی TCP وصل نشد؛ IP مسدوده یا سرور خاموشه.</td></tr>
+          <tr><td><span class="tag no">DNS پیدا نکرد</span></td><td>دامنه resolve نشد. DNS دیگه‌ای امتحان کن.</td></tr>
+          <tr><td><span class="tag no">تایم‌اوت</span></td><td>تا ۱۰ ثانیه جوابی نیومد.</td></tr>
+        </tbody></table>
+        <p>ستون پینگ برای سایت‌ها زمان TCP به سرور سایته. اگه پشت VPN باشی و TCP مستقیم ممکن نباشه، پینگ HTTP نشون داده میشه (با علامت HTTP).</p>
+      </div></details>
+
+      <details class="gd"><summary><i data-lucide="gamepad-2" width="16" height="16"></i>پینگ بازی‌ها چطور سنجیده میشه؟</summary><div>
+        <p>بیشتر سرورهای بازی فقط UDP هستن و بدون دسترسی ادمین نمیشه مستقیم پینگشون کرد. برای همین برای هر بازی، <b>منطقه‌هایی که سرورهاش اونجاست</b> (مثلاً بحرین، امارات، فرانکفورت) سنجیده میشه؛ پینگ تو بازی تقریباً همون پینگ تا اون شهره.</p>
+        <p>بازی‌هایی که سرور TCP واقعی دارن مستقیم پینگ میشن: Supercell (پورت 9339)، Battle.net (پورت 1119)، Riot (پورت 5223)، Minecraft (پورت 25565)، و CS2 / Dota 2 از لیست زنده‌ی سرورهای Steam.</p>
+        <p>سرورهای مشترک فقط یک بار پینگ میشن، پس تست ۵۰ بازی هم سریعه. سرور خاص خودت رو از «بازی / سرور دلخواه» اضافه کن.</p>
+      </div></details>
+
+      <details class="gd"><summary><i data-lucide="gauge" width="16" height="16"></i>تست سرعت</summary><div>
+        <p>با ۴ اتصال همزمان از Cloudflare دانلود و با ۳ اتصال آپلود می‌کنه. ۱.۵ ثانیه‌ی اول هر مرحله حساب نمیشه چون TCP هنوز به سرعت کامل نرسیده. آپلود فقط بایت‌هایی رو می‌شمره که سرور واقعاً دریافت کرده.</p>
+        <p>هر تست حدود ۱۰۰ تا چند صد مگابایت مصرف می‌کنه (بسته به سرعتت). روی اینترنت حجمی حواست باشه. دکمه‌ی توقف هر لحظه کار می‌کنه.</p>
+      </div></details>
+
+      <details class="gd"><summary><i data-lucide="search-code" width="16" height="16"></i>تست DNS و DNS دلخواه</summary><div>
+        <p>DNS فعلی سیستمت خودکار به لیست اضافه میشه. با فرم بالای جدول هر DNS دیگه‌ای (IPv4، IPv6، یا با پورت غیر ۵۳) اضافه کن؛ ذخیره میشه و دفعه‌ی بعد هم هست.</p>
+        <p>ستون «پاسخ»: <span class="tag ok">واقعی</span> یعنی برای youtube.com آدرس واقعی داد، <span class="tag no">فیلترشده</span> یعنی صفحه‌ی فیلتر رو داد.</p>
+        <p>برای تغییر DNS ویندوز: Settings ← Network ← Wi‑Fi یا Ethernet ← DNS server assignment ← Edit.</p>
+      </div></details>
+
+      <details class="gd"><summary><i data-lucide="shield" width="16" height="16"></i>VPN و اپراتورهای مختلف</summary><div>
+        <p>برنامه با همه‌ی اپراتورها (همراه اول، ایرانسل، مخابرات، شاتل، رایتل، ...) کار می‌کنه: همیشه IPv4 رو ترجیح میده چون IPv6 خیلی از اپراتورها ناقصه، تایم‌اوت‌ها برای خطوط موبایل بلندتره و تست‌ها محدود و موازی اجرا میشن تا DPI اپراتور مسدودشون نکنه.</p>
+        <p>VPN خودکار تشخیص داده میشه (اینترفیس تونل، حالت TUN / Fake-IP، IP دیتاسنتری، WARP). در حالت TUN آدرس‌های 198.18.x.x جعلی هستن و پینگ TCP بهشون بی‌معنیه؛ برنامه این رو علامت می‌زنه. پشت VPN از حالت HTTP استفاده کن.</p>
+        <p>اطلاعات شبکه IP خروجی واقعی (بعد از VPN) رو نشون میده، نه IP داخلی.</p>
+      </div></details>
+
+      <details class="gd"><summary><i data-lucide="scroll-text" width="16" height="16"></i>لاگ و گزارش خطا</summary><div>
+        <p>بخش «لاگ» (کلید <kbd>9</kbd>) همه‌ی خطاها و اتفاق‌های مهم برنامه رو با ساعت دقیق نشون میده: قطع شدن پایش، رد شدن درخواست‌های تست سرعت، سرویس‌های IP که جواب ندادن، خطاهای رابط کاربری و ... . عدد قرمز کنار منو یعنی خطای جدید داری.</p>
+        <p>برای گزارش باگ، «کپی همه» یا «ذخیره» رو بزن و متن رو بفرست.</p>
+      </div></details>
+
+      <details class="gd"><summary><i data-lucide="keyboard" width="16" height="16"></i>میانبرها</summary><div>
+        <div class="keys"><span><kbd>1</kbd>…<kbd>9</kbd> جابه‌جایی بین بخش‌ها</span><span><kbd>Enter</kbd> افزودن در فیلدها</span><span><kbd>Esc</kbd> بستن معرفی</span></div>
+      </div></details>
+    </section>
+
+    <!-- LOGS -->
+    <section class="tab" id="tab-logs">
+      <div class="head"><h1>لاگ</h1>
+        <button class="btn" id="logCopy"><i data-lucide="copy" width="15" height="15"></i>کپی همه</button>
+        <button class="btn" id="logSave"><i data-lucide="download" width="15" height="15"></i>ذخیره</button>
+        <button class="btn" id="logClear"><i data-lucide="trash-2" width="15" height="15"></i>پاک کردن</button>
+        <p>همه‌ی خطاها و اتفاق‌های برنامه (هسته‌ی Rust + رابط کاربری). برای گزارش باگ «کپی همه» رو بزن و بفرست.</p></div>
+      <div class="log-bar">
+        <div class="seg" id="logLvl" role="radiogroup" aria-label="سطح">
+          <button data-l="all" role="radio">همه</button><button data-l="error" role="radio">خطا</button><button data-l="warn" role="radio">هشدار</button><button data-l="info" role="radio">اطلاعات</button>
+        </div>
+        <input class="in fa-ph" id="logQ" placeholder="جستجو در لاگ..." aria-label="جستجو در لاگ">
+        <label class="chk"><input type="checkbox" id="logFollow" checked>دنبال کردن</label>
+        <span class="label" id="logCount" style="margin:0"></span>
+      </div>
+      <div class="panel tight logview" id="logView"></div>
+    </section>
+  </main>
+</div>
+
+<footer class="statusbar">
+  <span>پینگ <span class="num" id="sbPing">--</span></span>
+  <span>IP <span class="num" id="sbIp">--</span></span>
+  <span id="sbMode"></span>
+  <span class="r num" id="sbClock"></span>
+</footer>
+</div>
+
+<!-- ONBOARDING -->
+<div id="onb" class="onb" hidden role="dialog" aria-modal="true" aria-labelledby="onbTitle">
+  <div class="onb-card">
+    <div class="onb-art" id="onbArt"></div>
+    <div class="onb-body">
+      <span class="onb-step" id="onbStep"></span>
+      <h2 id="onbTitle"></h2>
+      <p id="onbText"></p>
+      <div id="onbExtra"></div>
+    </div>
+    <div class="onb-foot">
+      <div class="dots" id="onbDots"></div>
+      <button class="btn ghost" id="onbSkip">رد کردن</button>
+      <button class="btn" id="onbPrev">قبلی</button>
+      <button class="btn y" id="onbNext">بعدی</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" role="status"><i data-lucide="check" width="15" height="15"></i><span></span></div>
+<script src="games.js"></script>
+<script src="main.js"></script>
+</body>
+</html>
