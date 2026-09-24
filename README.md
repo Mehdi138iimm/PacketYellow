@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/cover.png" alt="PacketYellow" width="100%"/>
+<img src="assets/banner-1.png" alt="PacketYellow" width="100%"/>
 
 <br/>
 
@@ -45,6 +45,8 @@ PacketYellow همه‌ی این‌ها رو یه‌جا جواب میده. هم�
 <br/>
 
 ## ✨ امکانات
+
+<p align="center"><img src="assets/banner-2.png" alt="PacketYellow features" width="100%"/></p>
 
 | | بخش | چی کار می‌کنه |
 |:-:|---|---|
