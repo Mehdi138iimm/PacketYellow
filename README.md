@@ -1,169 +1,200 @@
 <div align="center">
 
-![PacketYellow](https://img.shields.io/badge/PacketYellow-v0.3.1-yellow?style=for-the-badge&logo=rocket)
+<img src="assets/cover.png" alt="PacketYellow" width="100%"/>
 
-# ⚡ PacketYellow
+<br/>
 
-**جعبه‌ابزار شبکه برای اینترنت ایران**
+# 🟡 PacketYellow
 
-پایش زنده · تست بازی‌های آنلاین · فیلتر‌شکن‌شناسی · DNS · سرعت · سرورهای تونل
+**ابزار دسکتاپ تست شبکه، ساخته‌شده برای واقعیتِ اینترنت ایران**
 
-[🌐 وبسایت](#) • [📥 دانلود](https://github.com/Mehdi138iimm/PacketYellow/releases) • [📺 YouTube](https://www.youtube.com/@Sir_Mr_yellow138) • [💬 تلگرام](#) • [🐛 مشکلات](https://github.com/Mehdi138iimm/PacketYellow/issues)
+*Ping · Jitter · Packet Loss · DNS · Speed · Filtering: all measured natively in Rust*
+
+<br/>
+
+![Version](https://img.shields.io/badge/version-0.3.1-FFCC00?style=for-the-badge&labelColor=0A0A0C)
+![Tauri](https://img.shields.io/badge/Tauri-2-FFC131?style=for-the-badge&logo=tauri&logoColor=white&labelColor=0A0A0C)
+![Rust](https://img.shields.io/badge/Rust-core-DEA584?style=for-the-badge&logo=rust&logoColor=white&labelColor=0A0A0C)
+![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white&labelColor=0A0A0C)
+![RTL](https://img.shields.io/badge/UI-فارسی%20RTL-239F40?style=for-the-badge&labelColor=0A0A0C)
+
+![Stars](https://img.shields.io/github/stars/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+![Downloads](https://img.shields.io/github/downloads/Mehdi138iimm/PacketYellow/total?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+![Last commit](https://img.shields.io/github/last-commit/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+
+<br/>
+
+[**⬇️ دانلود**](https://github.com/Mehdi138iimm/PacketYellow/releases/latest) &nbsp;•&nbsp;
+[**✨ امکانات**](#-امکانات) &nbsp;•&nbsp;
+[**🚀 اجرا**](#-اجرا-از-سورس) &nbsp;•&nbsp;
+[**🧱 ساختار**](#-ساختار-پروژه) &nbsp;•&nbsp;
+[**📝 تغییرات**](#-تغییرات)
 
 </div>
 
----
+<br/>
 
-## ⚙️ ویژگی‌ها
+<div dir="rtl">
 
-### 📊 داشبورد زنده
-- **پینگ دقیق** برای هر سروری
-- **جیتر و پکت‌لاس** به‌روز شونده هر ثانیه
-- **نمودار 90 ثانیه‌ای** با خطوط قرمز برای پکت گم‌شده
-- دو حالت: **TCP** (دقیق) و **HTTP** (برای پروکسی/VPN)
+## 💡 چرا PacketYellow؟
 
-### 🎮 پینگ بازی‌های آنلاین
-- **۲۶۶ بازی** از Valorant تا Clash Royale
-- سرورهای **واقعی TCP** برای Supercell · Battle.net · Riot · Minecraft · Steam
-- بهترین منطقه ستاره‌ای **★** می‌خوره
-- **جستجو و فیلتر** و دسته‌بندی
+اسپیدتست‌های معمولی فقط یه عدد بهت میدن. ولی تو ایران سؤال واقعی اینه: **چرا این سایت باز نمیشه؟ فیلتره، تحریمه یا قطعه؟ کدوم DNS الان جواب میده؟ پینگم تا سرور بازی چنده؟**
 
-### 🌐 تست سایت‌ها
-**۴ مرحله:** DNS → TCP → HTTPS → RTT واقعی
+PacketYellow همه‌ی این‌ها رو یه‌جا جواب میده. همه‌ی اندازه‌گیری‌ها **فقط در Rust** انجام میشه و رابط کاربری فقط عدد واقعی رو نشون میده، بدون حدس و بدون عدد فیک.
 
-نتایج واضح:
-- ✅ **باز** · 🟡 **کند** · 🔴 **فیلتر DNS** · 🚫 **فیلتر SNI/TLS** · ❌ **تحریم / قطع**
+<br/>
 
-### 📡 اطلاعات شبکه (جدید!)
-- IP عمومی‌ات + **IP مستقیم** (بدون VPN)
-- **اپراتور ایرانی** با اسم فارسی (ایرانسل · همراه اول · رایتل · ...)
-- **تشخیص VPN:** نوع، آداپتور، دلیل
-- **پروکسی سیستم** (v2rayN · Nekoray · ...)
-- **Wi‑Fi + هات‌اسپات** گوشی
-- **۶ سرویس IP** موازی برای جنوب‌شرق یافتن
+## ✨ امکانات
 
-### ⚡ تست سرعت (بهبود‌شده)
-- **۴ دانلود + ۳ آپلود** موازی
-- ثانیه‌های اول (slow-start) **حذف‌شده**
-- **تاخیر زیر بار** (بافربلوت) = لگ موقع تماس ویدیویی
-- لیست **تاریخچه** اخیر
+| | بخش | چی کار می‌کنه |
+|:-:|---|---|
+| 📈 | **داشبورد زنده** | پینگ لحظه‌ای، جیتر، پکت لاس و نمودار زنده (هر ثانیه یه تیک) |
+| 🌐 | **تست سایت‌ها** | ۴ مرحله: DNS، پینگ TCP، HTTPS، RTT واقعی + تشخیص دقیق دلیل: **فیلتر DNS** (`10.10.34.x`)، **فیلتر SNI/TLS**، **تحریم** (403/451)، قطعی، تایم‌اوت |
+| 🎮 | **پینگ بازی‌ها** | **۲۶۶ بازی آنلاین** با جستجو و دسته‌بندی؛ سرورهای واقعی Supercell، Battle.net، Riot، Minecraft و لیست زنده‌ی Steam برای CS2 و Dota 2 |
+| ⚡ | **تست سرعت** | ۴ اتصال دانلود / ۳ آپلود روی Cloudflare، حذف slow-start، تاخیر زیر بار (Bufferbloat)، حجم مصرفی |
+| 🧭 | **بنچمارک DNS** | ۲۰ DNS آماده (Cloudflare، Google، Shecan، ...) + DNS دلخواه؛ میانه، کمینه، درصد موفقیت و تشخیص پاسخ فیلترشده |
+| 🛡️ | **سرورهای تونل** | پینگ لینک‌های `vless` / `vmess` / `trojan` / `ss` / `hysteria2` / `tuic` + حالت HTTP از داخل تونل و تشخیص Fake-IP |
+| 🔎 | **اطلاعات شبکه** | IPv4/IPv6، ISP، ASN، شناسایی اپراتورهای ایرانی، تشخیص VPN / پروکسی / WARP / CGNAT، Wi‑Fi و هات‌اسپات، MTU و گیت‌وی |
+| 🧾 | **لاگ** | خطاها و رویدادهای Rust و UI با فیلتر، جستجو، کپی و ذخیره (حتی panicها) |
 
-### 🔍 تست DNS
-- **۲۰ DNS پیش‌فرض** + DNS دلخواه
-- **میانه · کمینه · درصد موفقیت**
-- تشخیص **پاسخ فیلترشده** (صفحه‌ی 10.10.34.x)
+<br/>
 
-### 🔗 سرورهای تونل
-- vless · vmess · trojan · ss · hysteria2 · tuic · wireguard · socks
-- **پینگ + جیتر + لاس** همه سرورها
-- **مرتب‌سازی** بر اساس سرعت
-- **کپی سریع** یکی کلیک
+## 🎨 طراحی
 
-### 📊 بخش لاگ (v0.3.1)
-- **خطاهای Rust** و جاوااسکریپت به‌روز
-- **فیلتر** سطح (خطا · هشدار · اطلاعات)
-- **جستجو** و **کپی گزارش** برای باگ‌گزاری
+- 🌙 تم تیره با رنگ امضای **زرد**، بدون glow و سایه‌ی اضافه
+- 🇮🇷 رابط کاملاً **فارسی و راست‌چین** با فونت Vazirmatn
+- 🔠 کمترین سایز متن 12px؛ پینگ لحظه‌ای بزرگ‌ترین عنصر صفحه
+- 🪟 تایتل‌بار سفارشی، اسپلش و Onboarding شش‌مرحله‌ای انیمیشنی
+- 📴 اجرای **بدون CDN** (فونت و آیکون‌ها با `npm run vendor` محلی میشن)
 
----
+<br/>
 
-## 📥 نصب
+## 🛠️ تکنولوژی
 
-### ویندوز / macOS / لینوکس
+<p align="center">
+  <img src="https://skillicons.dev/icons?i=rust,tauri,html,css,js,windows" />
+</p>
 
-1. **نسخه‌ی آخر** رو از [اینجا](https://github.com/Mehdi138iimm/PacketYellow/releases) دانلود کن
-2. **نصب کن** و **اجرا کن** ✨
+| لایه | ابزار |
+|---|---|
+| هسته | Rust · Tokio · reqwest (rustls) · hickory-resolver · if-addrs |
+| اپ دسکتاپ | Tauri 2 |
+| رابط کاربری | HTML / CSS / JavaScript خالص (بدون React و Vite) · Lucide Icons |
 
-### نیازمندی‌ها
+<br/>
 
-- **Windows 10+** یا **macOS 11+** یا **Ubuntu 20.04+**
-- WebView2 (ویندوز · معمولاً نصبه)
-- Rust 1.70+ (اگه از سرچشمه بسازی)
+## 🚀 اجرا از سورس
 
-### ساخت از سرچشمه
+### پیش‌نیازها
+1. [Rust](https://rustup.rs)
+2. [Node.js LTS](https://nodejs.org)
+3. ویندوز: **Microsoft C++ Build Tools** (Desktop development with C++) + **WebView2** (روی ویندوز ۱۰/۱۱ معمولاً نصبه)
+4. VS Code با افزونه‌های `rust-analyzer` و `Tauri`
+
+### دستورها
+
+</div>
 
 ```bash
 git clone https://github.com/Mehdi138iimm/PacketYellow.git
 cd PacketYellow
+
 npm install
-npm run build     # exe / dmg / deb
+npm run vendor                    # یک بار، با اینترنت: فونت و آیکون‌ها برای اجرای بدون CDN
+npm run dev                       # حالت توسعه
+npm run build                     # ساخت installer نهایی
+
+npm run tauri icon app-icon.png   # (اختیاری) ساخت همه‌ی آیکون‌ها از روی لوگو
+cd src-tauri && cargo test        # تست محاسبات جیتر و پکت لاس
 ```
 
----
+<div dir="rtl">
 
-## 🔧 استفاده
+<br/>
 
-### داشبورد
-- **TCP** = بدون VPN (دقیق‌ترین)
-- **HTTP** = با VPN / پروکسی
-- هر سروری رو کلیک کن یا دلخواهت وارد کن
+## 🧱 ساختار پروژه
 
-### جنگجوی بازی‌ها
-- بازی‌هات رو **تیک** بزن
-- **تست** رو بزن
-- ستاره **★** بهترین منطقه
+</div>
 
-### تست سرعت
-- **شروع** رو بزن
-- خط رو پر کن (یوتیوب + تورنت + ...)
-- **بافربلوت** رو ببین (لگ موقع بار)
+```text
+PacketYellow/
+├── src-tauri/src/
+│   ├── probe.rs      → کلاینت HTTP مشترک، تشخیص IP فیلتر و Fake-IP
+│   ├── ping.rs       → پینگ TCP بدون نیاز به ادمین، پینگ موازی چند سرور
+│   ├── stats.rs      → min / avg / max، جیتر، پکت لاس
+│   ├── monitor.rs    → داشبورد زنده (event: monitor://tick)
+│   ├── sites.rs      → تست دسترسی سایت‌ها + دلیل باز نشدن
+│   ├── dns.rs        → بنچمارک DNS
+│   ├── speed.rs      → تست سرعت دانلود / آپلود با پیشرفت زنده
+│   ├── netinfo.rs    → IP عمومی، ISP، ASN، اینترفیس‌ها
+│   └── applog.rs     → لاگ داخلی اپ
+└── ui/
+    ├── index.html    → ساختار رابط (RTL، تم تیره)
+    ├── style.css     → استایل
+    ├── main.js       → منطق رابط (فقط نمایش داده‌ی Rust)
+    └── games.js      → کاتالوگ بازی‌ها و منطقه‌ی سرورها
+```
 
----
+<div dir="rtl">
 
-## 🏗️ معماری
+<br/>
 
-| فایل | کار |
-|-----|-----|
-| `src-tauri/src/ping.rs` | TCP handshake (بدون ادمین) |
-| `src-tauri/src/speed.rs` | Cloudflare test (دانلود/آپلود) |
-| `src-tauri/src/netinfo.rs` | IP + ISP + VPN detection |
-| `src-tauri/src/monitor.rs` | Live dashboard (هر ثانیه) |
-| `ui/main.js` | رابط کاربری (بدون React) |
-| `ui/index.html` | ساختار (RTL فارسی) |
-| `ui/style.css` | طراحی تیره · بدون glow |
+## 📝 تغییرات
 
-**تمام اندازه‌گیری‌ها** توی **هسته‌ی Rust** انجام میشه، نه توی مرورگر.
+<details open>
+<summary><b>v0.3.1</b>: پایداری و دقت</summary>
 
----
+- رفع نامرئی شدن UI وقتی انیمیشن‌های ویندوز خاموشه
+- تست سرعت بازنویسی شد: سایز تطبیقی ۲۵→۱۰→۵→۱ مگ، تایم‌اوت، جلوگیری از دو تست همزمان، نمایش خطا به‌جای «0 Mbps»
+- بخش **لاگ** (کلید `9`) با ثبت panicهای Rust
+- اطلاعات شبکه با ۶ سرویس موازی، شناسایی اپراتورهای ایرانی با ASN، پروکسی سیستم و PAC، Wi‑Fi، هات‌اسپات
+- پنجره دیگه maximize و زوم نمیشه
+</details>
 
-## 📊 تاریخچه
+<details>
+<summary><b>v0.3</b>: بزرگ‌ترین آپدیت</summary>
 
-### v0.3.1 (جدید! 🎉)
-- ✅ **UI نامرئی شده**: انیمیشن‌های opacity:0 اصلاح‌شده
-- ✅ **تست سرعت**: درخواست‌های 25→10→5→1 MB + آپلود تطبیقی
-- ✅ **بخش لاگ**: خطاهای Rust + رابط کاربری + جستجو
-- ✅ **شبکه دقیق**: ۶ سرویس IP موازی + اپراتورهای ایرانی + IP مستقیم + Wi‑Fi
+- تست سایت‌ها ۴ مرحله‌ای با تشخیص فیلتر DNS / SNI / تحریم
+- ۲۶۶ بازی آنلاین + سرورهای واقعی
+- حالت HTTP برای VPN و تشخیص Fake-IP در حالت TUN
+- DNS دلخواه + ۲۰ DNS آماده
+- تست سرعت چنداتصالی با بافربلوت
+- Onboarding، اسپلش و بخش راهنما
+</details>
 
-### v0.3
-- 🟡 تایتل‌بار سفارشی
-- 🟡 تست سایت‌ها: ۴ مرحله (DNS → TCP → HTTPS → RTT)
-- 🟡 ۲۶۶ بازی آنلاین
-- 🟡 حالت HTTP برای VPN
+<details>
+<summary><b>v0.2</b>: رابط جدید</summary>
 
-### v0.2
-- رابط کاربری تیره جدید
-- بدون React: HTML/CSS/JS محض
-- همه‌ی اندازه‌گیری‌ها توی Rust
+- UI تیره‌ی جدید با HTML/CSS/JS خالص
+- انتقال همه‌ی اندازه‌گیری‌ها به Rust
+- تایتل‌بار سفارشی و ذخیره‌ی تاریخچه
+</details>
 
----
+<br/>
 
-## 🐛 مشکل؟
+## 🗺️ نقشه‌ی راه
 
-1. **بخش «لاگ»** (کلید 9) رو باز کن
-2. **کپی همه** رو بزن
-3. [مشکل جدید](https://github.com/Mehdi138iimm/PacketYellow/issues) بساز
+- [ ] پینگ ICMP واقعی با `surge-ping`
+- [ ] ذخیره‌ی تاریخچه با SQLite
+- [ ] پارس کامل لینک‌های vless / vmess / trojan
+- [ ] نمودارهای حرفه‌ای‌تر با uPlot
 
----
+<br/>
 
-## 📜 مجوز
+## 🤝 مشارکت
 
-MIT License — آزادانه استفاده و تغییر کن.
+ایده، باگ یا پیشنهاد داری؟ یه [Issue](https://github.com/Mehdi138iimm/PacketYellow/issues) باز کن یا Pull Request بفرست. اگه به کارت اومد، یه ⭐ بده که بیشتر دیده بشه.
 
----
+</div>
+
+<br/>
 
 <div align="center">
 
-**ساخت‌شده با ❤️ برای اینترنت‌‌های دشوار**
+<img src="https://raw.githubusercontent.com/Mehdi138iimm/PacketYellow/main/app-icon.png" width="64"/>
 
-[🎬 YouTube](https://www.youtube.com/@Sir_Mr_yellow138) • [💬 تلگرام](#) • [🌙 GitHub](https://github.com/Mehdi138iimm)
+**ساخته‌شده با 💛 توسط [Mehdi](https://github.com/Mehdi138iimm)**
+
+*برای ایران 🦁☀️*
 
 </div>
