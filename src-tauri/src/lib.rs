@@ -35,6 +35,7 @@ pub fn run() {
             speed::speed_test,
             speed::speed_cancel,
             netinfo::network_info,
+            netinfo::net_signature,
             monitor::start_monitor,
             monitor::stop_monitor,
             applog::get_logs,

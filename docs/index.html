@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PacketYellow · پکتات کجا رفتن؟</title>
+<meta name="description" content="PacketYellow: جعبه‌ابزار شبکه برای اینترنت ایران. پینگ زنده، ۲۶۶ بازی، تست فیلترینگ سایت‌ها، DNS، تست سرعت و تشخیص خودکار VPN. رایگان و متن‌باز.">
+<meta property="og:title" content="PacketYellow">
+<meta property="og:description" content="پکتات کجا رفتن؟ ما دقیق بهت میگیم.">
+<meta name="theme-color" content="#f2d21c">
+<link rel="icon" href="icon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --y: oklch(0.89 0.175 99);
+  --y-deep: oklch(0.8 0.17 90);
+  --y-soft: oklch(0.94 0.1 99);
+  --ink: oklch(0.19 0.02 95);
+  --ink-2: oklch(0.32 0.03 95);
+  --ink-3: oklch(0.45 0.04 95);
+  --d0: oklch(0.145 0.008 100);
+  --d1: oklch(0.18 0.009 100);
+  --d2: oklch(0.215 0.01 100);
+  --d3: oklch(0.26 0.012 100);
+  --line: oklch(0.29 0.012 100);
+  --t1: oklch(0.95 0.01 100);
+  --t2: oklch(0.76 0.014 100);
+  --t3: oklch(0.6 0.014 100);
+  --good: oklch(0.78 0.16 155);
+  --warn: oklch(0.8 0.14 70);
+  --bad: oklch(0.68 0.19 22);
+  --good-bg: oklch(0.27 0.05 155);
+  --warn-bg: oklch(0.28 0.05 70);
+  --bad-bg: oklch(0.27 0.06 22);
+  --mono: "JetBrains Mono", ui-monospace, monospace;
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --wrap: min(1200px, 100% - 48px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:Vazirmatn,Tahoma,system-ui,sans-serif;background:var(--d0);color:var(--t1);font-size:1rem;line-height:1.75;font-optical-sizing:auto;overflow-x:hidden}
+a{color:inherit}
+h1,h2,h3{text-wrap:balance;line-height:1.2}
+p{text-wrap:pretty}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+:focus-visible{outline:3px solid var(--y);outline-offset:3px;border-radius:8px}
+.wrap{width:var(--wrap);margin-inline:auto}
+kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line);border-bottom-width:3px;border-radius:7px;padding:1px 8px;color:var(--t1)}
+[hidden]{display:none!important}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 22px;border-radius:12px;font-weight:700;font-size:1rem;text-decoration:none;cursor:pointer;border:2px solid transparent;transition:transform .15s var(--ease),background .15s}
+.btn:active{transform:scale(.97)}
+.btn-ink{background:var(--ink);color:var(--y)}
+.btn-ink:hover{background:oklch(0.26 0.025 95)}
+.btn-line{border-color:var(--ink);color:var(--ink)}
+.btn-line:hover{background:oklch(0.84 0.16 97)}
+.btn-y{background:var(--y);color:var(--ink)}
+.btn-y:hover{background:var(--y-deep)}
+.btn-ghost{border-color:var(--line);color:var(--t1)}
+.btn-ghost:hover{background:var(--d2)}
+.btn small{font:500 .78rem var(--mono);opacity:.75}
+
+/* ---------- nav ---------- */
+.nav{position:sticky;top:0;z-index:20;background:var(--y);color:var(--ink);transition:background .25s,color .25s}
+.nav.dark{background:var(--d0);color:var(--t1);border-bottom:1px solid var(--line)}
+.nav .wrap{display:flex;align-items:center;gap:28px;height:68px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;direction:ltr}
+.brand img{width:36px;height:36px}
+.brand b{font-weight:900;font-size:1.15rem;letter-spacing:-.01em}
+.nav ul{display:flex;gap:22px;list-style:none;margin-inline-end:auto;font-weight:500;font-size:.95rem}
+.nav ul a{text-decoration:none;opacity:.8}
+.nav ul a:hover{opacity:1;text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
+.gh{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:10px;border:2px solid currentColor;text-decoration:none;font-weight:700;font-size:.9rem}
+.gh .num{font-size:.85rem}
+.nav .btn{min-height:40px;padding:0 16px;font-size:.9rem}
+.nav:not(.dark) .btn{background:var(--ink);color:var(--y)}
+.nav.dark .btn{background:var(--y);color:var(--ink)}
+
+/* ---------- hero (drenched) ---------- */
+.hero{background:var(--y);color:var(--ink);position:relative;overflow:hidden;padding:56px 0 0}
+.hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 .85rem var(--mono);direction:ltr;background:var(--ink);color:var(--y);border-radius:999px;padding:4px 14px 4px 6px}
+.eyebrow i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--good);margin-inline:6px}
+.hero h1{font-size:clamp(2.6rem,6.2vw,5.4rem);font-weight:900;letter-spacing:-.02em;margin:22px 0 20px;line-height:1.08}
+.hero h1 span{display:block;font-size:.5em;font-weight:700;color:var(--ink-2);margin-top:14px;letter-spacing:0}
+.hero p.lead{font-size:1.2rem;max-width:34ch;color:var(--ink-2);margin-bottom:32px}
+.cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.meta{display:flex;flex-wrap:wrap;gap:18px;margin-top:22px;font-size:.9rem;color:var(--ink-3)}
+.meta b{color:var(--ink);font-weight:700}
+
+/* app window mock */
+.win{background:var(--d0);color:var(--t1);border-radius:18px;border:1px solid oklch(0.35 0.05 95);box-shadow:0 40px 80px -30px oklch(0.3 0.08 90 / .55);overflow:hidden;transform:rotate(-1.2deg);font-size:.85rem}
+.win-bar{display:flex;align-items:center;gap:10px;height:38px;padding:0 14px;border-bottom:1px solid var(--line);direction:ltr}
+.win-bar img{width:18px;height:18px}
+.win-bar b{font-weight:900;font-size:.85rem}
+.win-bar b span{color:var(--y)}
+.pill{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 10px;border-radius:11px;background:var(--d2);color:var(--t2);font-size:.72rem}
+.pill.vpn{background:var(--good-bg);color:var(--good)}
+.win-bar .pills{display:flex;gap:6px;margin-left:auto}
+.win-body{padding:20px 22px 22px}
+.readout{display:flex;align-items:flex-end;gap:28px;flex-wrap:wrap;margin-bottom:14px}
+.big{display:flex;align-items:baseline;gap:6px;direction:ltr}
+.big .num{font-size:3.6rem;font-weight:800;letter-spacing:-.04em;line-height:.9;transition:color .3s}
+.big small{font:600 .9rem var(--mono);color:var(--t3)}
+.st{display:flex;flex-direction:column}
+.st .num{font-size:1.15rem;font-weight:600}
+.st span:last-child{font-size:.72rem;color:var(--t3)}
+.verdict{margin-inline-start:auto;text-align:left}
+.verdict b{display:block;font-size:1rem}
+.verdict span{font-size:.72rem;color:var(--t3)}
+.chart{width:100%;height:150px;display:block;direction:ltr;background:var(--d1);border-radius:12px}
+.chart .area{fill:oklch(0.3 0.06 100)}
+.chart .ln{fill:none;stroke:var(--y);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.chart .g{stroke:var(--line);vector-effect:non-scaling-stroke}
+.seg{display:inline-flex;background:var(--d2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.seg button{border:0;background:transparent;color:var(--t2);height:28px;padding:0 12px;border-radius:7px;font:600 .78rem Vazirmatn,sans-serif;cursor:pointer}
+.seg button[aria-checked=true]{background:var(--y);color:var(--ink)}
+.win-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.win-head h3{font-size:1.05rem;font-weight:900;margin-inline-end:auto}
+.good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
+
+/* marquee */
+.marquee{background:var(--ink);color:var(--y);margin-top:64px;overflow:hidden;border-block:1px solid oklch(0.3 0.04 95);direction:ltr}
+.marquee .track{display:flex;gap:40px;width:max-content;padding:16px 0;animation:mq 60s linear infinite;font:600 .95rem var(--mono)}
+.marquee span{white-space:nowrap}
+.marquee em{font-style:normal;color:var(--t2);margin-left:8px}
+@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ---------- sections ---------- */
+section{padding:112px 0}
+.kicker{font:600 .8rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--y);direction:ltr;display:inline-block}
+h2{font-size:clamp(2rem,4vw,3.2rem);font-weight:900;letter-spacing:-.015em;margin:10px 0 18px}
+.sub{color:var(--t2);font-size:1.1rem;max-width:58ch}
+
+/* tools: 1..9 */
+.tools-grid{display:grid;grid-template-columns:minmax(260px,380px) 1fr;gap:40px;margin-top:56px;align-items:start}
+.tlist{list-style:none;display:flex;flex-direction:column}
+.tlist button{width:100%;display:grid;grid-template-columns:34px 1fr;gap:14px;align-items:center;text-align:right;padding:14px 12px;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--t2);font:inherit;cursor:pointer;border-radius:0;transition:color .15s,background .15s}
+.tlist li:last-child button{border-bottom:0}
+.tlist button:hover{color:var(--t1);background:var(--d1)}
+.tlist button b{display:block;font-size:1.05rem;font-weight:700;color:inherit}
+.tlist button small{display:block;font-size:.85rem;color:var(--t3);line-height:1.5}
+.tlist button[aria-selected=true]{color:var(--t1);background:var(--d2);border-radius:12px;border-bottom-color:transparent}
+.tlist button[aria-selected=true] kbd{background:var(--y);color:var(--ink);border-color:var(--y-deep)}
+.stage{position:sticky;top:96px;background:var(--d1);border:1px solid var(--line);border-radius:20px;min-height:460px;overflow:hidden;display:flex;flex-direction:column}
+.stage-bar{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line);font-size:.85rem;color:var(--t3)}
+.stage-bar b{color:var(--t1);font-size:1rem}
+.stage-bar .prog{margin-inline-start:auto;width:80px;height:3px;background:var(--d3);border-radius:2px;overflow:hidden;direction:ltr}
+.stage-bar .prog i{display:block;height:100%;width:100%;background:var(--y);transform-origin:left;transform:scaleX(0)}
+.stage-bar .prog i.run{animation:prog 6s linear forwards}
+@keyframes prog{to{transform:scaleX(1)}}
+.stage-body{padding:24px;flex:1;animation:fadeUp .45s var(--ease)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.stage-body p.note{color:var(--t2);font-size:.95rem;margin-top:18px;max-width:60ch}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{font-weight:500;font-size:.75rem;color:var(--t3);text-align:right;padding:8px 10px;border-bottom:1px solid var(--line)}
+td{padding:11px 10px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+td.num{text-align:right}
+.tag{display:inline-flex;align-items:center;height:24px;padding:0 10px;border-radius:12px;font-size:.75rem;font-weight:700}
+.tag.ok{background:var(--good-bg);color:var(--good)}.tag.slow{background:var(--warn-bg);color:var(--warn)}.tag.no{background:var(--bad-bg);color:var(--bad)}
+.meter{height:6px;border-radius:3px;background:var(--d3);overflow:hidden;direction:ltr;min-width:80px}
+.meter span{display:block;height:100%;border-radius:3px;transform-origin:left;animation:grow .8s var(--ease) both}
+@keyframes grow{from{transform:scaleX(0)}}
+tr.best td{background:oklch(0.27 0.045 102)}
+.star{color:var(--y)}
+.speed2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.speed2 div{background:var(--d2);border-radius:14px;padding:22px}
+.speed2 .num{font-size:3rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+.speed2 small{color:var(--t3);font:600 .8rem var(--mono)}
+.speed2 label{display:block;font-size:.8rem;color:var(--t3);margin-bottom:6px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.9rem}
+.kv:last-child{border:0}.kv span{color:var(--t3)}
+.badge{display:inline-flex;height:22px;align-items:center;padding:0 9px;border-radius:11px;font-size:.75rem;background:var(--d3);color:var(--t2)}
+.badge.r{background:var(--bad-bg);color:var(--bad)}.badge.g{background:var(--good-bg);color:var(--good)}.badge.y{background:oklch(0.27 0.045 102);color:var(--y)}
+.lrow{display:grid;grid-template-columns:96px 56px 1fr;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:.82rem}
+.lrow .lt{color:var(--t3)} .lrow.e{color:var(--bad)} .lrow.w .ll{color:var(--warn)}
+.legend2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.legend2 div{background:var(--d2);border-radius:12px;padding:14px}
+.legend2 b{color:var(--y);display:block}
+.legend2 span{font-size:.85rem;color:var(--t2)}
+
+/* ---------- VPN auto (yellow band) ---------- */
+.auto{background:var(--y);color:var(--ink)}
+.auto .kicker{color:var(--ink-2)}
+.auto .sub{color:var(--ink-2)}
+.auto-grid{display:grid;grid-template-columns:1fr 1.15fr;gap:56px;align-items:center}
+.switch{display:inline-flex;align-items:center;gap:14px;margin-top:28px;cursor:pointer;font-weight:700;font-size:1.05rem;user-select:none}
+.switch input{position:absolute;opacity:0;pointer-events:none}
+.switch .sw{width:64px;height:36px;border-radius:18px;background:var(--ink);position:relative;flex:none}
+.switch .sw::after{content:"";position:absolute;top:5px;right:5px;width:26px;height:26px;border-radius:50%;background:var(--y);transition:transform .3s var(--ease)}
+.switch input:checked+.sw::after{transform:translateX(-28px);background:var(--good)}
+.switch input:focus-visible+.sw{outline:3px solid var(--ink);outline-offset:3px}
+.route{background:var(--d0);color:var(--t1);border-radius:22px;padding:28px;position:relative}
+.route-row{display:grid;grid-template-columns:auto 1fr auto 1fr auto;align-items:center;gap:10px;direction:ltr}
+.node{width:62px;height:62px;border-radius:16px;background:var(--d2);border:1px solid var(--line);display:grid;place-items:center;color:var(--t2);transition:background .3s,color .3s,opacity .3s,transform .3s var(--ease)}
+.node.tun{background:var(--y);color:var(--ink);border:0}
+.node.off{opacity:.18;transform:scale(.85)}
+.wire{height:3px;background:repeating-linear-gradient(90deg,var(--y) 0 8px,transparent 8px 16px);background-size:32px 3px;animation:flow .9s linear infinite}
+.wire.dim{opacity:.18;animation:none}
+@keyframes flow{to{background-position:32px 0}}
+.route-labels{display:grid;grid-template-columns:62px 1fr 62px 1fr 62px;gap:10px;direction:ltr;margin-top:8px;font-size:.72rem;color:var(--t3);text-align:center}
+.route-out{margin-top:24px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--line)}
+.route-out .mode{font:800 1.6rem var(--mono);color:var(--y)}
+.route-out p{color:var(--t2);font-size:.92rem;flex:1;min-width:220px}
+.detect{list-style:none;margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;font-size:.85rem;color:var(--t3)}
+.detect li{display:flex;gap:8px;align-items:center;transition:color .3s}
+.detect li::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--d3);flex:none;transition:background .3s}
+.route.on .detect li{color:var(--t1)}
+.route.on .detect li::before{background:var(--good)}
+
+/* ---------- verdicts ---------- */
+.verdicts{display:grid;grid-template-columns:1fr 1fr;gap:0 64px;margin-top:48px}
+.vd{display:grid;grid-template-columns:150px 1fr;gap:18px;padding:20px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.vd p{color:var(--t2);font-size:.95rem}
+.vd .tag{justify-self:start}
+
+/* ---------- browser ping ---------- */
+.probe{margin-top:64px;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;background:var(--d1);border:1px solid var(--line);border-radius:20px;padding:28px 32px}
+.probe .big .num{font-size:3rem}
+.probe p{color:var(--t2);font-size:.95rem;max-width:52ch}
+.probe p b{color:var(--t1)}
+.dots{display:flex;gap:5px;direction:ltr;margin-top:8px}
+.dots i{width:22px;height:6px;border-radius:3px;background:var(--d3);transition:background .3s}
+
+/* ---------- download ---------- */
+.dl{background:var(--d1);border-block:1px solid var(--line)}
+.dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-top:40px}
+.rel-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.rel-head .num{font-size:2.6rem;font-weight:800;color:var(--y);letter-spacing:-.02em}
+.rel-head span{color:var(--t3);font-size:.9rem}
+.assets{display:flex;flex-direction:column;gap:10px}
+.asset{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center;padding:16px 18px;border-radius:14px;background:var(--d2);border:1px solid var(--line);text-decoration:none;transition:border-color .15s,background .15s}
+.asset:hover{border-color:var(--y);background:var(--d3)}
+.asset .ic{width:40px;height:40px;border-radius:10px;background:var(--y);color:var(--ink);display:grid;place-items:center}
+.asset b{display:block;font-size:.95rem;word-break:break-all;direction:ltr;text-align:right}
+.asset small{color:var(--t3);font-size:.8rem}
+.asset.rec{border-color:var(--y-deep)}
+.skel{height:72px;border-radius:14px;background:linear-gradient(90deg,var(--d2) 0%,var(--d3) 50%,var(--d2) 100%);background-size:200% 100%;animation:sk 1.4s linear infinite}
+@keyframes sk{to{background-position:-200% 0}}
+.notes{background:var(--d0);border:1px solid var(--line);border-radius:16px;padding:20px 22px;max-height:420px;overflow:auto;font-size:.92rem;color:var(--t2)}
+.notes h4{color:var(--t1);font-size:1rem;margin:14px 0 6px}
+.notes h4:first-child{margin-top:0}
+.notes ul{padding-inline-start:20px;display:flex;flex-direction:column;gap:4px}
+.notes code{font:.85em var(--mono);background:var(--d3);padding:1px 6px;border-radius:5px}
+.dl-empty{padding:24px;border:1px dashed var(--line);border-radius:14px;color:var(--t2)}
+.dl-empty b{color:var(--t1);display:block;margin-bottom:6px}
+.build{margin-top:22px;font-size:.9rem;color:var(--t3)}
+.build pre{margin-top:10px;background:var(--d0);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font:.85rem/1.8 var(--mono);color:var(--t1);direction:ltr;text-align:left;overflow:auto}
+.build pre span{color:var(--t3)}
+
+/* ---------- faq ---------- */
+.faq{max-width:820px}
+.faq details{border-bottom:1px solid var(--line)}
+.faq summary{list-style:none;cursor:pointer;padding:22px 0;font-weight:700;font-size:1.1rem;display:flex;gap:16px;align-items:center}
+.faq summary::-webkit-details-marker{display:none}
+.faq summary::after{content:"+";margin-inline-start:auto;font:600 1.4rem var(--mono);color:var(--y);transition:transform .3s var(--ease)}
+.faq details[open] summary::after{transform:rotate(45deg)}
+.faq details p{padding:0 0 24px;color:var(--t2);max-width:68ch}
+
+/* ---------- footer ---------- */
+footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
+.foot-top{display:flex;justify-content:space-between;align-items:flex-end;gap:32px;flex-wrap:wrap}
+.foot-top h2{margin:0;font-size:clamp(2.2rem,5vw,4rem)}
+.foot-top h2 small{display:block;font-size:.35em;font-weight:500;color:var(--ink-2);margin-top:10px}
+.foot-bot{margin-top:56px;padding-top:20px;border-top:2px solid var(--ink);display:flex;gap:24px;flex-wrap:wrap;font-size:.9rem;color:var(--ink-2)}
+.foot-bot a{font-weight:700;color:var(--ink)}
+.foot-bot .r{margin-inline-start:auto}
+
+/* ---------- reveal ---------- */
+@media (prefers-reduced-motion:no-preference){
+  .rv{opacity:0;transform:translateY(24px);transition:opacity .8s var(--ease),transform .8s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}
+  .rv.in{opacity:1;transform:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- responsive ---------- */
+@media (max-width:1000px){
+  .hero .wrap,.auto-grid,.dl-grid{grid-template-columns:1fr}
+  .win{transform:none}
+  .tools-grid{grid-template-columns:1fr}
+  .stage{position:relative;top:0;min-height:0}
+  .verdicts{grid-template-columns:1fr}
+  .nav ul{display:none}
+  .nav .wrap{justify-content:space-between}
+}
+@media (max-width:640px){
+  :root{--wrap:min(1200px, 100% - 32px)}
+  section{padding:80px 0}
+  .hero{padding-top:36px}
+  .readout{gap:16px}.readout .st:nth-of-type(n+3){display:none}
+  .big .num{font-size:2.8rem}
+  .tlist{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .tlist button{grid-template-columns:1fr;text-align:center;justify-items:center;border:1px solid var(--line);border-radius:12px;padding:12px 6px}
+  .tlist button small{display:none}
+  .tlist button b{font-size:.85rem}
+  .probe{grid-template-columns:1fr;text-align:right}
+  .vd{grid-template-columns:1fr;gap:8px}
+  .detect{grid-template-columns:1fr}
+  .speed2{grid-template-columns:1fr}
+  .legend2{grid-template-columns:1fr}
+  .gh .lbl{display:none}
+  .win-bar .pills .pill:not(.vpn){display:none}
+}
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="PacketYellow"><img src="icon.svg" alt=""><b>PacketYellow</b></a>
+    <ul>
+      <li><a href="#tools">ابزارها</a></li>
+      <li><a href="#auto">VPN خودکار</a></li>
+      <li><a href="#sites">فیلترینگ</a></li>
+      <li><a href="#download">دانلود</a></li>
+      <li><a href="#faq">سؤال‌ها</a></li>
+    </ul>
+    <a class="gh" href="https://github.com/Mehdi138iimm/PacketYellow" target="_blank" rel="noopener" aria-label="گیت‌هاب">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.41-2.69 5.39-5.26 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+      <span class="lbl">ستاره</span><span class="num" id="stars">…</span>
+    </a>
+    <a class="btn" href="#download">دانلود</a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow"><i></i><span id="heroVer">PacketYellow</span> · open source</span>
+      <h1>پکتات کجا رفتن؟<span>ما دقیق بهت میگیم. تا آخرین میلی‌ثانیه.</span></h1>
+      <p class="lead">پینگ زنده، ۲۶۶ بازی، تست فیلترینگ سایت‌ها، DNS و تست سرعت. VPN رو هم خودش تشخیص میده. برای اینترنت ایران ساخته شده، با هسته‌ی Rust.</p>
+      <div class="cta">
+        <a class="btn btn-ink" id="heroDl" href="#download">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
+          دانلود برای ویندوز <small id="heroDlVer"></small>
+        </a>
+        <a class="btn btn-line" href="https://github.com/Mehdi138iimm/PacketYellow" target="_blank" rel="noopener">کد روی گیت‌هاب</a>
+      </div>
+      <div class="meta"><span><b>رایگان</b> برای همیشه</span><span><b>بدون</b> نیاز به ادمین</span><span>ویندوز ۱۰ و ۱۱</span></div>
+    </div>
+
+    <div class="win" aria-label="نمای داشبورد زنده‌ی برنامه" role="img">
+      <div class="win-bar">
+        <img src="icon.svg" alt=""><b>Packet<span>Yellow</span></b>
+        <div class="pills"><span class="pill"><i style="width:7px;height:7px;border-radius:50%;background:var(--good);display:inline-block"></i>connected</span><span class="pill">Tehran</span><span class="pill vpn" id="mockVpn" hidden>VPN</span></div>
+      </div>
+      <div class="win-body">
+        <div class="win-head"><h3>داشبورد زنده</h3>
+          <div class="seg" aria-hidden="true"><button aria-checked="true" id="mSegA">خودکار</button><button id="mSegT">TCP</button><button id="mSegH">HTTP</button></div>
+        </div>
+        <div class="readout">
+          <div class="big"><span class="num good" id="mNow">--</span><small>ms</small></div>
+          <div class="st"><span class="num" id="mAvg">--</span><span>میانگین</span></div>
+          <div class="st"><span class="num" id="mJit">--</span><span>جیتر</span></div>
+          <div class="st"><span class="num" id="mLoss">0.0%</span><span>پکت لاس</span></div>
+          <div class="verdict"><b class="good" id="mV">عالی</b><span id="mVs">آماده‌ی بازی</span></div>
+        </div>
+        <svg class="chart" id="mChart" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+  </div>
+  <div class="marquee" aria-hidden="true"><div class="track" id="mq"></div></div>
+</header>
+
+<main>
+<section id="tools">
+  <div class="wrap">
+    <span class="kicker rv">9 tools · 9 keys</span>
+    <h2 class="rv">نُه تا کلید، نُه تا جواب.</h2>
+    <p class="sub rv">توی برنامه با کلیدهای ۱ تا ۹ بین بخش‌ها می‌پری. اینجا هم همین‌طوره: یه عدد بزن.</p>
+
+    <div class="tools-grid">
+      <ul class="tlist" role="tablist" id="tlist" aria-label="ابزارها"></ul>
+      <div class="stage" role="tabpanel" id="stage" aria-live="polite">
+        <div class="stage-bar"><kbd id="stKey">1</kbd><b id="stName"></b><span class="prog" aria-hidden="true"><i id="stProg"></i></span></div>
+        <div class="stage-body" id="stBody"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="auto" id="auto">
+  <div class="wrap auto-grid">
+    <div>
+      <span class="kicker rv">Auto mode · new in 0.3.2</span>
+      <h2 class="rv">VPN زدی؟ خودش می‌فهمه.</h2>
+      <p class="sub rv">پشت VPN پینگ TCP دروغ میگه: یا به سرور VPN می‌خوره یا به یه آدرس جعلی. PacketYellow هر ۴ ثانیه شبکه رو نگاه می‌کنه و خودش بین TCP و HTTP جابه‌جا میشه. تو فقط بازیتو بکن.</p>
+      <label class="switch rv"><input type="checkbox" id="vpnSw"><span class="sw"></span><span id="vpnSwL">VPN خاموشه</span></label>
+    </div>
+    <div class="route rv" id="route">
+      <div class="route-row">
+        <div class="node" title="کامپیوتر تو"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20"/></svg></div>
+        <div class="wire"></div>
+        <div class="node tun off" id="rTun"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></div>
+        <div class="wire"></div>
+        <div class="node"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></div>
+      </div>
+      <div class="route-labels"><span>PC</span><span></span><span id="rTunL">no tunnel</span><span></span><span>game server</span></div>
+      <ul class="detect" aria-label="نشانه‌های VPN">
+        <li>آداپتور تونل (Wintun / TAP)</li>
+        <li>پروکسی سیستم روی 127.0.0.1</li>
+        <li>Fake-IP حالت TUN (198.18.x)</li>
+        <li>IP خروجی دیتاسنتری</li>
+        <li>روت‌های 0.0.0.0/1 (Full tunnel)</li>
+        <li>Cloudflare WARP</li>
+      </ul>
+      <div class="route-out">
+        <span class="mode" id="rMode">TCP</span>
+        <p id="rTxt">مستقیم. زمان دست‌دادن TCP تا سرور رو می‌سنجه، دقیق‌ترین حالت ممکن.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="sites">
+  <div class="wrap">
+    <span class="kicker rv">Why won't it load?</span>
+    <h2 class="rv">«باز نمیشه» جواب نیست.</h2>
+    <p class="sub rv">برای هر سایت چهار مرحله رو جدا تست می‌کنه: DNS، اتصال TCP، دست‌دادن TLS و پاسخ HTTP. بعد دقیق میگه کجا گیر کرده.</p>
+    <div class="verdicts">
+      <div class="vd rv"><span class="tag ok">باز</span><p>کامل جواب داد. عدد زمان پاسخ کنارش هست.</p></div>
+      <div class="vd rv"><span class="tag no">فیلتر (DNS)</span><p>DNS آدرس 10.10.34.x برگردوند، یعنی صفحه‌ی پیوندها. یه DNS دیگه امتحان کن.</p></div>
+      <div class="vd rv"><span class="tag no">فیلتر (SNI/TLS)</span><p>TCP وصل شد ولی سر HTTPS قطع شد. فیلترینگ روی اسم دامنه‌ست.</p></div>
+      <div class="vd rv"><span class="tag slow">تحریم / محدود</span><p>سرور جواب داد ولی با 403 یا 451 در رو بست. تحریم IP ایران.</p></div>
+      <div class="vd rv"><span class="tag no">اتصال برقرار نشد</span><p>حتی TCP هم وصل نشد. IP مسدوده یا سرور خاموشه.</p></div>
+      <div class="vd rv"><span class="tag slow">کُند</span><p>باز شد، ولی بیشتر از ۲.۵ ثانیه طول کشید.</p></div>
+    </div>
+
+    <div class="probe rv" id="probe">
+      <div class="big"><span class="num" id="pNum">--</span><small>ms</small></div>
+      <div>
+        <p><b>پینگ مرورگرت تا Cloudflare.</b> <span id="pTxt">یه تست کوچیک همین‌جا. مرورگر چیزای اضافه هم حساب می‌کنه، پس عدد برنامه دقیق‌تره.</span></p>
+        <div class="dots" id="pDots"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <button class="btn btn-y" id="pRun">تست کن</button>
+    </div>
+  </div>
+</section>
+
+<section class="dl" id="download">
+  <div class="wrap">
+    <span class="kicker rv">Download · live from GitHub</span>
+    <h2 class="rv">بگیرش. رایگانه.</h2>
+    <p class="sub rv">این بخش مستقیم از ریلیزهای گیت‌هاب خونده میشه؛ هر نسخه‌ای منتشر بشه همین‌جا میاد. برنامه هم خودش نسخه‌ی جدید رو خبر میده.</p>
+    <div class="dl-grid">
+      <div>
+        <div class="rel-head" id="relHead"><span class="num">…</span></div>
+        <div class="assets" id="assets"><div class="skel"></div><div class="skel"></div></div>
+        <div class="build">
+          یا خودت بسازش:
+          <pre>git clone https://github.com/Mehdi138iimm/PacketYellow.git
+cd PacketYellow
+npm install
+npm run build   <span># Rust + Node.js LTS لازمه</span></pre>
+        </div>
+      </div>
+      <div>
+        <div class="notes" id="notes"><div class="skel" style="height:18px;margin-bottom:10px"></div><div class="skel" style="height:18px;width:70%;margin-bottom:10px"></div><div class="skel" style="height:18px;width:85%"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap faq">
+    <span class="kicker rv">FAQ</span>
+    <h2 class="rv">سؤال داری؟</h2>
+    <details class="rv"><summary>ویندوز میگه «Windows protected your PC». چی کار کنم؟</summary><p>برنامه هنوز امضای دیجیتال نداره و SmartScreen برای برنامه‌های تازه این پیام رو نشون میده. روی More info و بعد Run anyway بزن. کد کامل روی گیت‌هاب هست، اگه خواستی خودت بسازش.</p></details>
+    <details class="rv"><summary>چرا پینگ بازی با عدد داخل بازی فرق داره؟</summary><p>بیشتر سرورهای بازی فقط UDP ان و بدون دسترسی ادمین نمیشه مستقیم پینگشون کرد. برای همین پینگ تا دیتاسنتر منطقه‌ی سرور (بحرین، دبی، فرانکفورت و ...) سنجیده میشه که تقریباً همون عدده. Supercell، Battle.net، Riot، Minecraft و سرورهای Steam مستقیم پینگ میشن.</p></details>
+    <details class="rv"><summary>با کدوم اپراتورها کار می‌کنه؟</summary><p>همه: همراه اول، ایرانسل، مخابرات، شاتل، رایتل و بقیه. IPv4 رو ترجیح میده چون IPv6 خیلی از خط‌ها ناقصه، و تست‌ها رو محدود و موازی اجرا می‌کنه که DPI اپراتور گیر نده.</p></details>
+    <details class="rv"><summary>تست سرعت چقدر حجم می‌خوره؟</summary><p>بسته به سرعتت ۱۰۰ تا چند صد مگابایت. روی اینترنت حجمی حواست باشه، دکمه‌ی توقف هر لحظه کار می‌کنه.</p></details>
+    <details class="rv"><summary>اطلاعاتم جایی فرستاده میشه؟</summary><p>نه. همه‌ی تست‌ها روی کامپیوتر خودت اجرا میشن و هیچ سروری مال PacketYellow نیست. فقط برای پیدا کردن IP و موقعیت، از سرویس‌های عمومی مثل Cloudflare و ip-api سؤال می‌کنه.</p></details>
+    <details class="rv"><summary>باگ پیدا کردم.</summary><p>تو برنامه برو بخش «لاگ» (کلید <kbd>9</kbd>)، «کپی همه» رو بزن و توی <a href="https://github.com/Mehdi138iimm/PacketYellow/issues" target="_blank" rel="noopener">Issues گیت‌هاب</a> بفرست.</p></details>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <h2>پکتات رفت؟<small>حالا می‌دونی کجا.</small></h2>
+      <a class="btn btn-ink" href="#download">دانلود PacketYellow</a>
+    </div>
+    <div class="foot-bot">
+      <span>ساخته‌ی <a href="https://github.com/Mehdi138iimm" target="_blank" rel="noopener">Mehdi138</a></span>
+      <a href="https://github.com/Mehdi138iimm/PacketYellow" target="_blank" rel="noopener">گیت‌هاب</a>
+      <a href="https://github.com/Mehdi138iimm/PacketYellow/releases" target="_blank" rel="noopener">همه‌ی نسخه‌ها</a>
+      <a href="https://github.com/Mehdi138iimm/PacketYellow/issues" target="_blank" rel="noopener">گزارش باگ</a>
+      <span class="r mono">Tauri 2 · Rust</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const REPO = 'Mehdi138iimm/PacketYellow';
+const REPO_URL = 'https://github.com/' + REPO;
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const q = ms => ms == null ? 'bad' : ms < 60 ? 'good' : ms < 120 ? 'warn' : 'bad';
+const fa = n => Number(n).toLocaleString('fa-IR');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- nav colour flips over dark sections ---------- */
+const nav = $('nav');
+const yellowZones = () => [...document.querySelectorAll('.hero,.auto,footer')];
+function navTone() {
+  const y = 72; // just under the nav
+  const onYellow = yellowZones().some(el => { const r = el.getBoundingClientRect(); return r.top <= y && r.bottom >= y; });
+  nav.classList.toggle('dark', !onYellow);
+}
+addEventListener('scroll', navTone, { passive: true }); navTone();
+
+/* ---------- hero: simulated live monitor (same maths as the app) ---------- */
+let vpnOn = false;
+const S = []; const N = 60;
+function nextPing() {
+  const base = vpnOn ? 96 : 38, spread = vpnOn ? 14 : 6;
+  const last = S.length ? S[S.length - 1] : base;
+  let v = last + (Math.random() - .5) * spread + (base - last) * .25;
+  if (Math.random() < .04) v += spread * 3;
+  return Math.max(8, v);
+}
+function tickMock() {
+  S.push(nextPing()); if (S.length > N) S.shift();
+  const n = S.length, avg = S.reduce((a, b) => a + b, 0) / n;
+  let j = 0; for (let i = 1; i < n; i++) j += Math.abs(S[i] - S[i - 1]); j = n > 1 ? j / (n - 1) : 0;
+  const now = S[n - 1];
+  $('mNow').textContent = Math.round(now); $('mNow').className = 'num ' + q(now);
+  $('mAvg').textContent = avg.toFixed(1); $('mJit').textContent = j.toFixed(1);
+  const [c, t, s] = avg > 150 ? ['bad', 'اتصال ضعیف', 'برای بازی مناسب نیست'] : (j > 20 || avg > 90) ? ['warn', 'قابل قبول', 'بازی رقابتی ممکنه لگ بزنه'] : ['good', 'عالی', 'آماده‌ی بازی'];
+  $('mV').textContent = t; $('mV').className = c; $('mVs').textContent = s;
+  const W = 600, H = 150, max = Math.max(80, Math.max(...S) * 1.2), st = W / (N - 1), off = N - n;
+  const pts = S.map((v, i) => `${((i + off) * st).toFixed(1)},${(H - v / max * H).toFixed(1)}`).join(' ');
+  const x0 = (off * st).toFixed(1);
+  let g = ''; [.33, .66].forEach(k => g += `<line class="g" x1="0" x2="${W}" y1="${H * k}" y2="${H * k}"/>`);
+  $('mChart').innerHTML = `${g}<polygon class="area" points="${x0},${H} ${pts} ${W},${H}"/><polyline class="ln" points="${pts}"/>`;
+}
+for (let i = 0; i < 30; i++) S.push(nextPing());
+tickMock(); if (!reduce) setInterval(tickMock, 1000);
+
+/* ---------- marquee of games ---------- */
+const GAMES = [['Valorant', 'Bahrain', 38], ['Counter-Strike 2', 'Dubai', 52], ['PUBG Mobile', 'Bahrain', 61], ['Fortnite', 'Bahrain', 44], ['EA FC 25', 'Frankfurt', 83], ['Clash Royale', 'Supercell', 49], ['League of Legends', 'Istanbul', 74], ['Dota 2', 'Dubai', 57], ['Call of Duty: Warzone', 'Dubai', 66], ['Apex Legends', 'Bahrain', 55], ['Minecraft', 'Hypixel', 142], ['Rocket League', 'Bahrain', 47], ['Overwatch 2', 'Frankfurt', 91], ['Brawl Stars', 'Supercell', 51], ['Rainbow Six Siege', 'UAE', 49], ['Genshin Impact', 'Europe', 118]];
+const mqHtml = GAMES.map(([g, r, p]) => `<span>${g}<em>${r} · ${p}ms</em></span>`).join('');
+$('mq').innerHTML = mqHtml + mqHtml;
+
+/* ---------- 1..9 tools ---------- */
+const bar = (w, c) => `<div class="meter"><span style="width:${Math.min(100, w)}%;background:var(--${c})"></span></div>`;
+const TOOLS = [
+  { n: 'داشبورد زنده', d: 'هر ثانیه پینگ، جیتر و لاس، با حکم نهایی', b: () => `
+    <div class="readout"><div class="big"><span class="num good" id="t1n">41</span><small>ms</small></div>
+    <div class="st"><span class="num">39.6</span><span>میانگین</span></div><div class="st"><span class="num">3.1</span><span>جیتر</span></div><div class="st"><span class="num">0.0%</span><span>لاس</span></div>
+    <div class="verdict"><b class="good">عالی</b><span>برای بازی و تماس تصویری</span></div></div>
+    <table><tbody>${[['Cloudflare', 'www.cloudflare.com', 41], ['Google', '8.8.8.8:443', 46], ['Steam', 'api.steampowered.com', 88], ['Digikala', 'www.digikala.com', 9]].map(([a, b, v]) => `<tr><td>${a}<br><small class="mono" style="color:var(--t3)">${b}</small></td><td>${bar(v / 1.6, q(v))}</td><td class="num ${q(v)}">${v} ms</td></tr>`).join('')}</tbody></table>
+    <p class="note">هدف دلخواه هم می‌تونی بذاری: سرور بازی خودت، با host:port یا یه آدرس https.</p>` },
+  { n: 'تست سایت‌ها', d: 'باز، فیلتر DNS، فیلتر SNI، تحریم یا قطعی', b: () => `
+    <table><thead><tr><th>سایت</th><th>وضعیت</th><th>پینگ</th><th>پاسخ</th></tr></thead><tbody>
+    ${[['google.com', 'ok', 'باز', 52, 310], ['youtube.com', 'no', 'فیلتر (SNI/TLS)', 58, null], ['instagram.com', 'no', 'فیلتر (DNS)', null, null], ['developer.android.com', 'slow', 'تحریم / محدود', 61, 420], ['digikala.com', 'ok', 'باز', 9, 180], ['chatgpt.com', 'slow', 'تحریم / محدود', 47, 390]].map(([s, c, t, p, h]) => `<tr><td class="mono">${s}</td><td><span class="tag ${c}">${t}</span></td><td class="num">${p ?? '--'}${p ? ' ms' : ''}</td><td class="num">${h ?? '--'}${h ? ' ms' : ''}</td></tr>`).join('')}</tbody></table>` },
+  { n: 'پینگ بازی‌ها', d: '۲۶۶ بازی، بهترین منطقه ستاره می‌گیره', b: () => `
+    <table><thead><tr><th>بازی / منطقه</th><th>پینگ</th><th></th><th>لاس</th></tr></thead><tbody>
+    ${[['Valorant', 'Bahrain', 38, 1], ['Valorant', 'Istanbul', 71, 0], ['PUBG Mobile', 'Middle East', 61, 1], ['Counter-Strike 2', 'Steam · Dubai', 52, 1], ['EA Sports FC 25', 'Frankfurt', 83, 1], ['Fortnite', 'NA-East', 188, 1]].map(([g, r, p, s], i) => `<tr class="${i === 0 ? 'best' : ''}"><td>${g}${s && i < 5 && [0, 2, 3, 4].includes(i) ? ' <span class="star">★</span>' : ''}<br><small class="mono" style="color:var(--t3)">${r}</small></td><td class="num ${q(p)}">${p} ms</td><td>${bar(p / 2, q(p))}</td><td class="num">0%</td></tr>`).join('')}</tbody></table>` },
+  { n: 'تست سرعت', d: 'چند اتصال همزمان، با تاخیر زیر بار', b: () => `
+    <div class="speed2"><div><label>دانلود</label><span class="num">87.4</span> <small>Mbps</small></div><div><label>آپلود</label><span class="num">21.9</span> <small>Mbps</small></div></div>
+    <div style="margin-top:14px">${[['تاخیر بی‌بار', '24 ms'], ['تاخیر زیر بار', '61 ms'], ['بافربلوت', '<span class="badge g">B · خوب</span>'], ['دیتاسنتر', 'FRA']].map(([k, v]) => `<div class="kv"><span>${k}</span><b class="mono">${v}</b></div>`).join('')}</div>` },
+  { n: 'سرورهای تونل', d: 'vless، vmess، trojan، ss، hy2؛ مرتب از بهترین', b: () => `
+    <table><thead><tr><th>سرور</th><th>پروتکل</th><th>پینگ</th><th>لاس</th></tr></thead><tbody>
+    ${[['DE-Hetzner', 'vless', 71, 0], ['NL-Reality', 'vless', 84, 0], ['TR-IST', 'trojan', 96, 0], ['FI-hy2', 'hysteria2', 118, 2], ['US-CDN', 'vmess', 204, 5]].map(([a, b, p, l]) => `<tr><td class="mono">${a}</td><td><span class="badge">${b}</span></td><td class="num ${q(p)}">${p} ms</td><td class="num ${l > 1 ? 'warn' : ''}">${l}%</td></tr>`).join('')}</tbody></table>
+    <p class="note">لینک‌ها یا ساب‌اسکریپشن رو پیست کن؛ هر خط یه سرور.</p>` },
+  { n: 'تست DNS', d: 'سریع‌ترین DNS و اینکه جواب واقعی میده یا فیلتر', b: () => `
+    <table><thead><tr><th>DNS</th><th>میانه</th><th></th><th>پاسخ</th></tr></thead><tbody>
+    ${[['Shecan', '178.22.122.100', 11, 1], ['سیستم', '192.168.1.1', 14, 0], ['Cloudflare', '1.1.1.1', 42, 1], ['Google', '8.8.8.8', 48, 1], ['Quad9', '9.9.9.9', 96, 1]].map(([a, b, p, r], i) => `<tr class="${i === 0 ? 'best' : ''}"><td>${a}<br><small class="mono" style="color:var(--t3)">${b}</small></td><td class="num ${q(p)}">${p} ms</td><td>${bar(p, 'y')}</td><td><span class="tag ${r ? 'ok' : 'no'}">${r ? 'واقعی' : 'فیلترشده'}</span></td></tr>`).join('')}</tbody></table>` },
+  { n: 'اطلاعات شبکه', d: 'IP واقعی، اپراتور، ASN و نشانه‌های VPN', b: () => `
+    ${[['IP عمومی', '<span class="mono">5.160.xx.xx</span>'], ['اپراتور', 'ایرانسل <span class="badge g">اپراتور ایرانی</span>'], ['ASN', '<span class="mono">AS44244</span>'], ['نوع خط', 'موبایل (سیم‌کارت)'], ['VPN / پروکسی', '<span class="badge g">غیرفعال</span>'], ['CGNAT', '<span class="badge r">بله (IP مشترک)</span>'], ['Wi‑Fi', 'MyHome · 86%']].map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('')}` },
+  { n: 'راهنما', d: 'معنی هر عدد، به زبون آدمیزاد', b: () => `
+    <div class="legend2">
+      <div><b>پینگ</b><span>زیر ۶۰ عالی، ۶۰ تا ۱۲۰ قابل قبول، بالای ۱۲۰ برای بازی بد.</span></div>
+      <div><b>جیتر</b><span>نوسان پینگ. بالای ۲۰ms یعنی لگ لحظه‌ای.</span></div>
+      <div><b>پکت لاس</b><span>بسته‌هایی که نرسیدن. بالای ۱٪ حس میشه.</span></div>
+      <div><b>تاخیر زیر بار</b><span>پینگ وقتی خط پره. اگه خیلی بالا بره، مودمت لگ می‌سازه.</span></div>
+    </div>` },
+  { n: 'لاگ', d: 'هر خطا با ساعت دقیق، آماده‌ی گزارش باگ', b: () => `
+    ${[['03:12:04.118', 'info', 'app', 'PacketYellow v0.3.2 شروع شد · windows x86_64'], ['03:12:05.902', 'info', 'ui', 'تشخیص خودکار VPN: روشن → حالت HTTP'], ['03:12:09.311', 'warn', 'netinfo', 'IP خروجی متفاوت دیده شد (Split tunnel؟)'], ['03:13:40.027', 'error', 'speed', 'درخواست 25MB رد شد؛ تلاش با 10MB'], ['03:13:52.640', 'info', 'speed', 'دانلود 87.4 Mbps · آپلود 21.9 Mbps']].map(([t, l, s, m]) => `<div class="lrow ${l[0]}"><span class="lt mono">${t}</span><span class="ll">${{ info: 'اطلاعات', warn: 'هشدار', error: 'خطا' }[l]}</span><span>${m}</span></div>`).join('')}` },
+];
+let tCur = 0, tAuto = !reduce, tTimer = 0;
+$('tlist').innerHTML = TOOLS.map((t, i) => `<li role="presentation"><button role="tab" id="tt${i}" aria-selected="false" data-i="${i}"><kbd>${i + 1}</kbd><span><b>${t.n}</b><small>${t.d}</small></span></button></li>`).join('');
+function showTool(i, user) {
+  tCur = (i + TOOLS.length) % TOOLS.length;
+  if (user) tAuto = false;
+  document.querySelectorAll('#tlist button').forEach((b, k) => b.setAttribute('aria-selected', k === tCur));
+  $('stKey').textContent = tCur + 1; $('stName').textContent = TOOLS[tCur].n;
+  const body = $('stBody'); body.innerHTML = TOOLS[tCur].b(); body.style.animation = 'none'; void body.offsetWidth; body.style.animation = '';
+  const p = $('stProg'); p.classList.remove('run'); void p.offsetWidth;
+  clearTimeout(tTimer);
+  if (tAuto) { p.classList.add('run'); tTimer = setTimeout(() => showTool(tCur + 1), 6000); }
+}
+$('tlist').addEventListener('click', e => { const b = e.target.closest('button'); if (b) showTool(+b.dataset.i, true); });
+$('tlist').addEventListener('keydown', e => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') { e.preventDefault(); showTool(tCur + 1, true); $('tt' + tCur).focus(); }
+  if (e.key === 'ArrowUp' || e.key === 'ArrowRight') { e.preventDefault(); showTool(tCur - 1, true); $('tt' + tCur).focus(); }
+});
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.altKey || e.metaKey || e.target.matches('input,textarea')) return;
+  const k = e.key.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); const i = +k;
+  if (i >= 1 && i <= 9) { showTool(i - 1, true); const r = $('tools').getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) $('tools').scrollIntoView(); }
+});
+// only auto-cycle while the section is on screen
+new IntersectionObserver(([en]) => { if (!tAuto) return; if (en.isIntersecting) showTool(tCur); else clearTimeout(tTimer); }, { threshold: .3 }).observe($('stage'));
+showTool(0);
+
+/* ---------- VPN switch demo ---------- */
+$('vpnSw').addEventListener('change', e => {
+  vpnOn = e.target.checked;
+  $('route').classList.toggle('on', vpnOn);
+  $('rTun').classList.toggle('off', !vpnOn);
+  $('rTunL').textContent = vpnOn ? 'VPN tunnel' : 'no tunnel';
+  $('vpnSwL').textContent = vpnOn ? 'VPN روشنه' : 'VPN خاموشه';
+  $('rMode').textContent = vpnOn ? 'HTTP' : 'TCP';
+  $('rTxt').textContent = vpnOn ? 'روی یه اتصال باز، درخواست کوچیک از داخل تونل می‌فرسته. پینگ واقعی از پشت VPN، نه عدد جعلی.' : 'مستقیم. زمان دست‌دادن TCP تا سرور رو می‌سنجه، دقیق‌ترین حالت ممکن.';
+  $('mockVpn').hidden = !vpnOn;
+  $('mSegA').textContent = vpnOn ? 'خودکار · HTTP' : 'خودکار';
+  S.splice(0, S.length - 12);
+});
+
+/* ---------- browser ping (honest: fetch timing, not ICMP) ---------- */
+async function probe() {
+  const btn = $('pRun'); btn.disabled = true; btn.textContent = 'در حال تست...';
+  const dots = [...$('pDots').children]; dots.forEach(d => d.style.background = '');
+  const res = [];
+  for (let i = 0; i < dots.length; i++) {
+    const t0 = performance.now();
+    try {
+      await fetch('https://www.cloudflare.com/cdn-cgi/trace?py=' + Math.random().toString(36).slice(2), { mode: 'no-cors', cache: 'no-store' });
+      const ms = performance.now() - t0; if (i) res.push(ms); // first one pays DNS + TLS
+      dots[i].style.background = `var(--${q(ms)})`;
+    } catch { dots[i].style.background = 'var(--bad)'; }
+    $('pNum').textContent = res.length ? Math.round([...res].sort((a, b) => a - b)[Math.floor(res.length / 2)]) : '--';
+    await new Promise(r => setTimeout(r, 250));
+  }
+  if (res.length) {
+    const med = [...res].sort((a, b) => a - b)[Math.floor(res.length / 2)];
+    $('pNum').className = 'num ' + q(med);
+    $('pTxt').textContent = med < 60 ? 'خط خوبیه. عدد دقیق و جیتر رو برنامه بهت میده.' : med < 150 ? 'بد نیست، ولی برای بازی رقابتی ببین برنامه چی میگه.' : 'بالاست. برنامه رو بگیر ببین مشکل از خطه، DNS یا VPN.';
+  } else {
+    $('pNum').className = 'num bad'; $('pTxt').textContent = 'به Cloudflare نرسید. یا اینترنت قطعه یا مسیرش بسته‌ست؛ تست سایت‌های برنامه دقیق میگه کدوم.';
+  }
+  btn.disabled = false; btn.textContent = 'دوباره';
+}
+$('pRun').addEventListener('click', probe);
+
+/* ---------- GitHub: stars + latest release ---------- */
+const fmtSize = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.round(b / 1024) + ' KB';
+function mdLite(s) {
+  // tiny, safe markdown: headings, bullets, **bold**, `code`
+  const lines = esc(s).split(/\r?\n/); let out = '', inList = false;
+  const inline = t => t.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>');
+  for (const l of lines) {
+    const h = l.match(/^#{1,4}\s+(.*)/), li = l.match(/^\s*[-*]\s+(.*)/);
+    if (li) { if (!inList) { out += '<ul>'; inList = true; } out += `<li>${inline(li[1])}</li>`; continue; }
+    if (inList) { out += '</ul>'; inList = false; }
+    if (h) out += `<h4>${inline(h[1])}</h4>`; else if (l.trim()) out += `<p>${inline(l)}</p>`;
+  }
+  return out + (inList ? '</ul>' : '');
+}
+const dlIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>';
+function noRelease(msg) {
+  $('relHead').innerHTML = '<span class="num">soon</span>';
+  $('assets').innerHTML = `<div class="dl-empty"><b>${msg}</b>تا اون موقع می‌تونی از کد بسازیش یا صفحه‌ی ریلیزها رو ببینی.<div style="margin-top:14px"><a class="btn btn-y" href="${REPO_URL}/releases" target="_blank" rel="noopener">صفحه‌ی ریلیزها</a></div></div>`;
+  $('notes').innerHTML = '<h4>نسخه‌ی بعدی: 0.3.2</h4><ul><li>تشخیص خودکار VPN و جابه‌جایی بین TCP و HTTP</li><li>رفع تایپ نشدن تو فیلدهای هدف دلخواه، سایت و DNS</li><li>درست شدن اندازه‌ی جستجوی بازی‌ها</li><li>آیکون جدید و این سایت</li></ul>';
+}
+async function gh() {
+  fetch('https://api.github.com/repos/' + REPO).then(r => r.ok ? r.json() : null).then(j => { $('stars').textContent = j ? fa(j.stargazers_count) : '★'; }).catch(() => { $('stars').textContent = '★'; });
+  let r;
+  try { r = await fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { headers: { Accept: 'application/vnd.github+json' } }); }
+  catch { return noRelease('گیت‌هاب الان جواب نداد.'); }
+  if (r.status === 404) return noRelease('هنوز نسخه‌ای منتشر نشده.');
+  if (!r.ok) return noRelease(r.status === 403 ? 'گیت‌هاب محدودیت درخواست گذاشته؛ چند دقیقه دیگه.' : 'ریلیز خونده نشد.');
+  const rel = await r.json();
+  const tag = rel.tag_name || rel.name || '';
+  const date = rel.published_at ? new Date(rel.published_at).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const total = (rel.assets || []).reduce((a, x) => a + (x.download_count || 0), 0);
+  $('relHead').innerHTML = `<span class="num">${esc(tag)}</span><span>${esc(date)}${total ? ` · ${fa(total)} دانلود` : ''}</span>`;
+  $('heroVer').textContent = tag; $('heroDlVer').textContent = tag;
+  const rank = n => /\.exe$/i.test(n) ? 0 : /\.msi$/i.test(n) ? 1 : 2;
+  const assets = (rel.assets || []).filter(a => !/\.(sig|blockmap|json)$/i.test(a.name)).sort((a, b) => rank(a.name) - rank(b.name));
+  if (!assets.length) { $('assets').innerHTML = `<a class="asset" href="${esc(rel.html_url)}" target="_blank" rel="noopener"><span class="ic">${dlIcon}</span><span><b>${esc(tag)}</b><small>فایل‌ها رو تو صفحه‌ی ریلیز ببین</small></span></a>`; }
+  else {
+    $('assets').innerHTML = assets.map((a, i) => `<a class="asset${i === 0 ? ' rec' : ''}" href="${esc(a.browser_download_url)}"><span class="ic">${dlIcon}</span><span><b>${esc(a.name)}</b><small>${fmtSize(a.size)} · ${fa(a.download_count || 0)} دانلود${i === 0 ? ' · پیشنهادی' : ''}</small></span><span class="mono" style="color:var(--t3);font-size:.8rem">${/\.msi$/i.test(a.name) ? 'MSI' : /\.exe$/i.test(a.name) ? 'EXE' : ''}</span></a>`).join('');
+    $('heroDl').href = assets[0].browser_download_url;
+  }
+  $('notes').innerHTML = rel.body ? mdLite(rel.body) : '<p>برای این نسخه یادداشتی نوشته نشده.</p>';
+}
+gh();
+
+/* ---------- reveal on scroll ---------- */
+const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+document.querySelectorAll('.rv').forEach((el, i) => { el.style.setProperty('--i', i % 6); io.observe(el); });
+</script>
+</body>
+</html>

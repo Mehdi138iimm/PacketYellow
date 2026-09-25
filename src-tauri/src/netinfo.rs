@@ -825,6 +825,77 @@ pub async fn network_info() -> Result<NetInfo, String> {
     Ok(info)
 }
 
+/* ------------------------------------------------------------------ quick fingerprint (auto VPN mode) */
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct NetSig {
+    /// changes whenever adapters, the default-route IP or the system proxy change
+    sig: String,
+    /// cheap local evidence that traffic goes through a VPN/proxy (system proxy, TUN adapter on the
+    /// default route, Fake-IP). `false` does NOT mean "no VPN": the full `network_info` decides that.
+    hint_vpn: bool,
+}
+
+#[cfg(windows)]
+fn quick_proxy() -> Option<String> {
+    // one `reg query` is much cheaper than the PowerShell block used by network_info
+    let t = run_hidden("reg", &["query", r"HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings"])?;
+    let (mut enabled, mut server, mut pac) = (false, None, None);
+    for line in t.lines() {
+        let p: Vec<&str> = line.split_whitespace().collect();
+        if p.len() < 3 {
+            continue;
+        }
+        match p[0] {
+            "ProxyEnable" => enabled = p[2] == "0x1",
+            "ProxyServer" => server = Some(p[2..].join(" ")),
+            "AutoConfigURL" => pac = Some(format!("PAC {}", p[2..].join(" "))),
+            _ => {}
+        }
+    }
+    if enabled { server.or(pac) } else { pac }
+}
+
+#[cfg(not(windows))]
+fn quick_proxy() -> Option<String> {
+    ["https_proxy", "HTTPS_PROXY", "http_proxy", "HTTP_PROXY", "all_proxy", "ALL_PROXY"]
+        .iter()
+        .find_map(|k| std::env::var(k).ok().filter(|v| !v.is_empty()))
+}
+
+#[tauri::command]
+pub async fn net_signature() -> Result<NetSig, String> {
+    tauri::async_runtime::spawn_blocking(|| {
+        let primary = primary_local_ip();
+        let mut parts: Vec<String> = Vec::new();
+        let mut primary_named_vpn = false;
+        for i in if_addrs::get_if_addrs().unwrap_or_default() {
+            if i.is_loopback() {
+                continue;
+            }
+            let ip = i.ip();
+            if Some(ip) == primary && looks_vpn(&i.name) {
+                primary_named_vpn = true;
+            }
+            parts.push(format!("{}={}", i.name, ip));
+        }
+        parts.sort();
+        parts.dedup();
+        let proxy = quick_proxy();
+        let fake = primary.map(|p| is_fake_ip(&p)).unwrap_or(false);
+        let sig = format!(
+            "{}|{}|{}",
+            primary.map(|p| p.to_string()).unwrap_or_default(),
+            proxy.clone().unwrap_or_default(),
+            parts.join(",")
+        );
+        NetSig { sig, hint_vpn: fake || primary_named_vpn || proxy.is_some() }
+    })
+    .await
+    .map_err(|e| e.to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

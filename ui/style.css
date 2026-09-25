@@ -375,3 +375,13 @@ html{scroll-behavior:smooth}
 .phase.bad{color:var(--bad)}
 .sp-err{margin:20px 0 0;background:var(--bad-bg);color:var(--bad)}
 .nrow b small{display:block;font:var(--fs-xs) var(--mono);color:var(--t3);direction:ltr;text-align:left;margin-top:2px}
+
+/* ---------- v0.3.2 ---------- */
+/* game search grew to the full panel height: .in has flex:1 and .gpanel is a flex column */
+.gpanel>.in{flex:0 0 auto;height:38px}
+.field .in{min-width:0}
+/* auto mode: show which method is actually running */
+.seg button.eff{color:var(--y);outline:1px solid var(--y-line);outline-offset:-1px}
+.pick.three{grid-template-columns:repeat(3,1fr)}
+.sp-mark{width:88px;height:88px;background:none;border-radius:0;display:block}
+.pill.upd{border:0;cursor:pointer;background:var(--y-bg);color:var(--y);font:inherit;font-size:var(--fs-xs)} .pill.upd svg{color:var(--y)} .pill.upd:hover{background:var(--y);color:var(--b0)}

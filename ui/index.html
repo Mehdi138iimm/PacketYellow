@@ -13,7 +13,7 @@
 <body>
 
 <div id="splash" aria-hidden="true">
-  <div class="sp-mark"><i data-lucide="zap" width="34" height="34"></i></div>
+  <img class="sp-mark" src="icon.svg" alt="">
   <b class="sp-name">Packet<span>Yellow</span></b>
   <div class="sp-bars"><span></span><span></span><span></span><span></span><span></span></div>
   <small>در حال آماده‌سازی هسته‌ی شبکه</small>
@@ -31,6 +31,7 @@
     <span class="pill"><span class="sdot" id="hdot"></span><span id="hstat">در حال اتصال</span></span>
     <span class="pill"><i data-lucide="building-2" width="14" height="14"></i><span id="hisp">...</span></span>
     <span class="pill"><i data-lucide="map-pin" width="14" height="14"></i><span id="hloc">...</span></span>
+    <button class="pill upd" id="hupd" hidden><i data-lucide="arrow-down-circle" width="14" height="14"></i><span></span></button>
     <span class="pill vpn" id="hvpn" hidden><i data-lucide="shield-check" width="14" height="14"></i>VPN</span>
   </div>
 </header>
@@ -63,12 +64,13 @@
     <section class="tab" id="tab-dash">
       <div class="head"><h1>داشبورد زنده</h1>
         <div class="seg" id="modeSeg" role="radiogroup" aria-label="روش سنجش">
+          <button data-m="auto" role="radio" title="خودش تشخیص میده VPN روشنه یا نه">خودکار</button>
           <button data-m="tcp" role="radio">TCP</button>
           <button data-m="http" role="radio">HTTP · مناسب VPN</button>
         </div>
         <button class="btn" id="monToggle"><i data-lucide="pause" width="15" height="15"></i><span>توقف</span></button>
       </div>
-      <div class="hint" id="vpnHint" hidden><i data-lucide="shield-alert" width="17" height="17"></i><span>VPN روشنه. توی حالت TCP پینگ ممکنه غیرواقعی (خیلی کم یا خیلی زیاد) باشه. حالت HTTP از داخل تونل می‌سنجه.</span><button class="btn y sm" id="vpnHintBtn">برو روی HTTP</button></div>
+      <div class="hint" id="vpnHint" hidden><i data-lucide="shield-alert" width="17" height="17"></i><span>VPN روشنه. توی حالت TCP پینگ ممکنه غیرواقعی (خیلی کم یا خیلی زیاد) باشه. حالت HTTP از داخل تونل می‌سنجه.</span><button class="btn y sm" id="vpnHintBtn">حالت خودکار</button></div>
       <div class="readout">
         <div class="now"><span class="num" id="dNow">--</span><small>ms</small></div>
         <div class="st"><span class="num" id="dAvg">--</span><span>میانگین</span></div>
@@ -176,7 +178,7 @@
 
     <!-- GUIDE -->
     <section class="tab" id="tab-guide">
-      <div class="head"><h1>راهنما</h1><button class="btn y" id="replayOnb"><i data-lucide="sparkles" width="15" height="15"></i>نمایش دوباره‌ی معرفی</button><p>هر چیزی که برای خوندن عددهای PacketYellow لازم داری.</p></div>
+      <div class="head"><h1>راهنما</h1><button class="btn" data-open="https://mehdi138iimm.github.io/PacketYellow/"><i data-lucide="globe" width="15" height="15"></i>سایت برنامه</button><button class="btn" data-open="https://github.com/Mehdi138iimm/PacketYellow/issues"><i data-lucide="bug" width="15" height="15"></i>گزارش باگ</button><button class="btn y" id="replayOnb"><i data-lucide="sparkles" width="15" height="15"></i>نمایش دوباره‌ی معرفی</button><p>هر چیزی که برای خوندن عددهای PacketYellow لازم داری.</p></div>
 
       <div class="legend">
         <div class="lg"><b>پینگ</b><span>زمان رفت و برگشت یه بسته. <em class="good">زیر ۶۰</em> عالی، <em class="warn">۶۰ تا ۱۲۰</em> قابل قبول، <em class="bad">بالای ۱۲۰</em> برای بازی بد.</span></div>
@@ -187,7 +189,7 @@
 
       <details class="gd" open><summary><i data-lucide="activity" width="16" height="16"></i>داشبورد زنده</summary><div>
         <p>هر ثانیه یه نمونه از هدف انتخاب‌شده گرفته میشه و ۹۰ ثانیه‌ی آخر روی نمودار میاد. خط‌های قرمز یعنی بسته گم شده.</p>
-        <p><b>TCP:</b> زمان دست‌دادن TCP رو می‌سنجه. بدون VPN دقیق‌ترین حالته.<br><b>HTTP · مناسب VPN:</b> روی یه اتصال باز، درخواست کوچیک می‌فرسته. چون از پروکسی/تونل سیستم رد میشه، پینگ واقعی از پشت VPN رو نشون میده.</p>
+        <p><b>خودکار (پیش‌فرض):</b> برنامه هر چند ثانیه شبکه رو چک می‌کنه؛ اگه VPN / پروکسی روشن باشه خودش میره روی HTTP و اگه خاموش باشه برمی‌گرده روی TCP.<br><b>TCP:</b> زمان دست‌دادن TCP رو می‌سنجه. بدون VPN دقیق‌ترین حالته.<br><b>HTTP · مناسب VPN:</b> روی یه اتصال باز، درخواست کوچیک می‌فرسته. چون از پروکسی/تونل سیستم رد میشه، پینگ واقعی از پشت VPN رو نشون میده.</p>
         <p>با فیلد «هدف دلخواه» می‌تونی هر آدرسی رو پایش کنی، مثلاً سرور بازی خودت.</p>
       </div></details>
 

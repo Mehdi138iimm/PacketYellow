@@ -124,7 +124,13 @@ let customTarget = store.get('customTarget', null);
 const allTargets = () => customTarget ? [...TARGETS, customTarget] : TARGETS;
 let curName = store.get('targetName', 'Cloudflare');
 let cur = allTargets().find(t => t.name === curName) || TARGETS[0];
-let mode = store.get('mode', 'tcp');
+// modePref: what the user picked (auto | tcp | http). mode: what is actually running.
+let modePref = store.get('modePref', 'auto');
+if (!['auto', 'tcp', 'http'].includes(modePref)) modePref = 'auto';
+let autoVpn = false;       // result of VPN detection (full network_info + quick local check)
+let quickHint = false;     // quick local check: system proxy / TUN adapter on the default route / Fake-IP
+const effMode = () => modePref === 'auto' ? (autoVpn ? 'http' : 'tcp') : modePref;
+let mode = effMode();
 let samples = [], logItems = [], mon = null, running = true, gen = 0;
 const N = 90;
 
@@ -142,19 +148,38 @@ function renderTargets() {
   $('targets').querySelectorAll('.tgt').forEach(b => b.onclick = () => { cur = allTargets()[+b.dataset.i]; store.set('targetName', cur.name); renderTargets(); restart(); });
 }
 function renderMode() {
-  $('modeSeg').querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', b.dataset.m === mode));
-  $('mMode').textContent = mode.toUpperCase();
-  $('modeNote').textContent = mode === 'http' ? 'درخواست HTTP روی اتصال باز (از داخل VPN/پروکسی)' : 'پینگ TCP از هسته‌ی Rust';
-  $('vpnHint').hidden = !(netInfo?.vpn && mode === 'tcp');
+  const auto = modePref === 'auto';
+  $('modeSeg').querySelectorAll('button').forEach(b => {
+    b.setAttribute('aria-checked', b.dataset.m === modePref);
+    b.classList.toggle('eff', auto && b.dataset.m === mode);
+  });
+  $('mMode').textContent = (auto ? 'A·' : '') + mode.toUpperCase();
+  $('mMode').title = auto ? 'حالت خودکار' : '';
+  const how = mode === 'http' ? 'درخواست HTTP روی اتصال باز (از داخل VPN/پروکسی)' : 'پینگ TCP از هسته‌ی Rust';
+  $('modeNote').textContent = auto ? `خودکار: ${autoVpn ? 'VPN روشنه ← HTTP' : 'VPN خاموشه ← TCP'} · ${how}` : how;
+  $('vpnHint').hidden = !(netInfo?.vpn && modePref === 'tcp');
 }
-function setMode(m) { if (m === mode) return; mode = m; store.set('mode', m); renderMode(); renderTargets(); restart(); }
+// switch the running monitor only if the effective mode really changed
+function applyMode(announce) {
+  const m = effMode();
+  renderMode();
+  if (m === mode) return;
+  mode = m; renderMode(); renderTargets(); restart();
+  if (announce) toast(autoVpn ? 'VPN تشخیص داده شد · رفت روی HTTP' : 'VPN خاموشه · برگشت روی TCP');
+}
+function setMode(m) { if (m === modePref) return; modePref = m; store.set('modePref', m); applyMode(false); }
+function setAutoVpn(v, announce) {
+  v = !!v; const changed = v !== autoVpn; autoVpn = v;
+  if (changed) uiLog('info', 'ui', `تشخیص خودکار VPN: ${v ? 'روشن' : 'خاموش'}${modePref === 'auto' ? ` → حالت ${v ? 'HTTP' : 'TCP'}` : ''}`);
+  applyMode(announce && modePref === 'auto');
+}
 $('modeSeg').querySelectorAll('button').forEach(b => b.onclick = () => setMode(b.dataset.m));
-$('vpnHintBtn').onclick = () => setMode('http');
+$('vpnHintBtn').onclick = () => setMode('auto');
 $('tgtAdd').onclick = () => {
   const t = parseTarget($('tgtIn').value); if (!t) return toast('آدرس نامعتبره');
   customTarget = t; store.set('customTarget', t); cur = t; store.set('targetName', t.name); $('tgtIn').value = ''; renderTargets(); restart();
 };
-$('tgtIn').onkeydown = e => e.key === 'Enter' && $('tgtAdd').click();
+$('tgtIn').onkeydown = e => { if (e.key === 'Enter') $('tgtAdd').click(); };
 
 function stats() {
   if (!samples.length) return null;
@@ -275,7 +300,7 @@ function addSite() {
   if (!sites.some(s => s.url === v)) sites.push({ url: v });
   $('siteIn').value = ''; saveSites(); renderSites();
 }
-$('siteAdd').onclick = addSite; $('siteIn').onkeydown = e => e.key === 'Enter' && addSite();
+$('siteAdd').onclick = addSite; $('siteIn').onkeydown = e => { if (e.key === 'Enter') addSite(); };
 $('siteClear').onclick = () => { sites = []; saveSites(); renderSites(); };
 $('siteRun').onclick = e => busy(e.currentTarget, async () => {
   if (!sites.length) return;
@@ -502,7 +527,7 @@ $('dnsAdd').onclick = () => {
   if (dnsList().some(d => d.ip === ip)) return toast('این DNS تو لیست هست');
   customDns.unshift({ name, ip }); store.set('customDns', customDns); $('dnsIp').value = $('dnsName').value = ''; renderDns(); toast(name + ' اضافه شد');
 };
-$('dnsIp').onkeydown = e => e.key === 'Enter' && $('dnsAdd').click();
+$('dnsIp').onkeydown = e => { if (e.key === 'Enter') $('dnsAdd').click(); };
 $('dnsRun').onclick = e => busy(e.currentTarget, async () => {
   const res = await api.dns(dnsList().map(({ name, ip }) => ({ name, ip })));
   dnsRes = new Map(res.map(r => [r.ip, r])); dnsRan = true; renderDns();
@@ -559,12 +584,32 @@ function renderNet() {
   $('hvpn').hidden = !n.vpn;
   renderMode(); icons();
 }
-async function loadNet() {
-  try { netInfo = await api.netInfo(); }
-  catch (e) { $('netGrid').innerHTML = card('وضعیت', 'alert-triangle', row('خطا', esc(errText(e)))); $('hisp').textContent = $('hloc').textContent = '--'; icons(); return; }
-  renderNet(); renderDns();
+let netLoading = null;
+function loadNet(announce) {
+  if (netLoading) return netLoading; // never run two heavy network_info calls at once
+  netLoading = (async () => {
+    try { netInfo = await api.netInfo(); }
+    catch (e) { $('netGrid').innerHTML = card('وضعیت', 'alert-triangle', row('خطا', esc(errText(e)))); $('hisp').textContent = $('hloc').textContent = '--'; icons(); return; }
+    renderNet(); renderDns();
+    setAutoVpn(netInfo.vpn || quickHint, announce);
+  })().finally(() => { netLoading = null; });
+  return netLoading;
 }
-$('netRefresh').onclick = e => busy(e.currentTarget, loadNet);
+
+/* ---------- auto VPN detection ----------
+   Every few seconds Rust returns a cheap fingerprint of the local network (adapters, default route IP,
+   system proxy). When it changes (VPN turned on/off, proxy toggled, Wi-Fi switched) the full
+   network_info runs again and the monitor switches between TCP and HTTP by itself. */
+let netSig = null;
+async function pollNet() {
+  if (!IN_APP) return;
+  let s; try { s = await rawInvoke('net_signature'); } catch { return; }
+  const changed = netSig !== null && s.sig !== netSig;
+  netSig = s.sig; quickHint = !!s.hintVpn;
+  if (quickHint && !autoVpn) setAutoVpn(true, true); // proxy / TUN is certain: switch right away
+  if (changed) { uiLog('info', 'ui', 'تغییر شبکه دیده شد؛ بررسی دوباره‌ی VPN'); loadNet(true); }
+}
+$('netRefresh').onclick = e => busy(e.currentTarget, () => loadNet(true));
 
 /* ---------- log tab ---------- */
 const LVL_FA = { error: 'خطا', warn: 'هشدار', info: 'اطلاعات' };
@@ -623,7 +668,7 @@ const ONB = [
   { art: 'hello', t: 'به PacketYellow خوش اومدی', p: 'جعبه‌ابزار شبکه برای اینترنت ایران: پینگ زنده، ۲۰۰+ بازی، تست سایت و فیلترینگ، DNS، تست سرعت و سرورهای تونل. همه‌ی اندازه‌گیری‌ها تو هسته‌ی Rust انجام میشه، نه تو مرورگر.' },
   { art: 'live', t: 'پینگ، جیتر و لاس، لحظه‌ای', p: 'داشبورد هر ثانیه اتصالت رو می‌سنجه و بهت میگه برای بازی یا تماس تصویری آماده‌ای یا نه. می‌تونی هر سروری رو به‌عنوان هدف بذاری.' },
   { art: 'games', t: 'بیش از ۲۰۰ بازی آنلاین', p: 'بازی‌هات رو تیک بزن؛ پینگ تا منطقه‌ی سرورهای هر بازی (بحرین، امارات، فرانکفورت و ...) سنجیده میشه و بهترین منطقه ستاره می‌گیره.' },
-  { art: 'vpn', t: 'با VPN وصل میشی؟', p: 'پشت VPN پینگ معمولی گول می‌خوره. انتخاب کن تا روش درست رو برات تنظیم کنم (بعداً هم از داشبورد عوض میشه).', pick: true },
+  { art: 'vpn', t: 'با VPN وصل میشی؟', p: 'پشت VPN پینگ معمولی گول می‌خوره. تو حالت خودکار برنامه خودش می‌فهمه VPN روشنه یا نه و بین TCP و HTTP جابه‌جا میشه (از داشبورد هم عوض میشه).', pick: true },
   { art: 'speed', t: 'تست سرعت دقیق', p: 'چند اتصال همزمان، حذف ثانیه‌های اول، و سنجش «تاخیر زیر بار» تا بفهمی مودمت وقت دانلود لگ می‌سازه یا نه.' },
   { art: 'keys', t: 'آماده‌ای!', p: 'با کلیدهای ۱ تا ۹ بین بخش‌ها جابه‌جا شو. هر وقت سؤالی داشتی، بخش «راهنما» توضیح همه‌چیز رو داره.' },
 ];
@@ -633,7 +678,7 @@ function drawOnb() {
   $('onbArt').innerHTML = typeof ART[s.art] === 'function' ? ART[s.art]() : ART[s.art];
   $('onbStep').textContent = `${onbI + 1} / ${ONB.length}`;
   $('onbTitle').textContent = s.t; $('onbText').textContent = s.p;
-  $('onbExtra').innerHTML = s.pick ? `<div class="pick"><button data-m="tcp" aria-pressed="${mode === 'tcp'}"><b>بدون VPN</b><small>پینگ TCP، دقیق‌ترین حالت</small></button><button data-m="http" aria-pressed="${mode === 'http'}"><b>با VPN / پروکسی</b><small>پینگ HTTP از داخل تونل</small></button></div>` : '';
+  $('onbExtra').innerHTML = s.pick ? `<div class="pick three"><button data-m="auto" aria-pressed="${modePref === 'auto'}"><b>خودکار (پیشنهادی)</b><small>خودش VPN رو تشخیص میده</small></button><button data-m="tcp" aria-pressed="${modePref === 'tcp'}"><b>همیشه TCP</b><small>بدون VPN، دقیق‌ترین حالت</small></button><button data-m="http" aria-pressed="${modePref === 'http'}"><b>همیشه HTTP</b><small>پینگ از داخل تونل</small></button></div>` : '';
   $('onbExtra').querySelectorAll('[data-m]').forEach(b => b.onclick = () => { setMode(b.dataset.m); drawOnb(); });
   $('onbDots').innerHTML = ONB.map((_, i) => `<span class="${i === onbI ? 'on' : ''}"></span>`).join('');
   $('onbPrev').style.visibility = onbI ? 'visible' : 'hidden';
@@ -653,15 +698,42 @@ $('onbPrev').onclick = () => { if (onbI) { onbI--; drawOnb(); } };
 $('onbSkip').onclick = closeOnb;
 $('replayOnb').onclick = openOnb;
 
+/* ---------- website + update check (GitHub releases) ---------- */
+const REPO = 'Mehdi138iimm/PacketYellow';
+function openUrl(u) {
+  const o = T?.opener;
+  if (o?.openUrl) return o.openUrl(u).catch(() => window.open(u, '_blank'));
+  window.open(u, '_blank');
+}
+document.addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) { e.preventDefault(); openUrl(b.dataset.open); } });
+const verNum = v => String(v || '').replace(/^v/i, '').split(/[.-]/).map(x => parseInt(x, 10) || 0);
+const newer = (a, b) => { const x = verNum(a), y = verNum(b); for (let i = 0; i < 3; i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
+async function checkUpdate() {
+  let cur = '0.3.2';
+  try { if (IN_APP && T.app?.getVersion) cur = await T.app.getVersion(); } catch {}
+  try {
+    const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!r.ok) return; // 404 = no release yet, 403 = rate limit: stay quiet
+    const rel = await r.json();
+    if (!newer(rel.tag_name, cur)) return;
+    const b = $('hupd'); b.hidden = false; b.querySelector('span').textContent = 'نسخه‌ی جدید ' + rel.tag_name;
+    b.title = 'الان: ' + cur; b.onclick = () => openUrl(rel.html_url || `https://github.com/${REPO}/releases/latest`);
+    uiLog('info', 'ui', `نسخه‌ی جدید منتشر شده: ${rel.tag_name} (نسخه‌ی فعلی ${cur})`); icons();
+  } catch {}
+}
+
 /* ---------- boot ---------- */
 initLogs();
 $('sbMode').textContent = IN_APP ? 'متصل به هسته‌ی Rust' : 'پیش‌نمایش مرورگر: اندازه‌گیری فقط داخل اپ';
 setInterval(() => $('sbClock').textContent = new Date().toLocaleTimeString('en-GB'), 1000);
 show('dash'); renderMode(); renderTargets(); renderSites(); renderCats(); renderGList(); renderGRows(); renderSpHist(); renderTun(); renderDns();
 icons();
-const splashDone = Promise.race([loadNet(), new Promise(r => setTimeout(r, 2500))]);
+const splashDone = Promise.race([loadNet(false), new Promise(r => setTimeout(r, 2500))]);
+setInterval(pollNet, 4000);
+setTimeout(checkUpdate, 5000); setInterval(checkUpdate, 6 * 3600 * 1000);
 Promise.all([splashDone, new Promise(r => setTimeout(r, 900))]).then(() => {
   $('splash').classList.add('hide'); setTimeout(() => $('splash').remove(), 600);
   if (store.get('onboarded', 0) < 3) setTimeout(openOnb, 350);
 });
-restart();
+// quick local check first so the monitor starts in the right mode (max 1.5s wait)
+Promise.race([pollNet(), new Promise(r => setTimeout(r, 1500))]).finally(() => { mode = effMode(); renderMode(); renderTargets(); restart(); });
