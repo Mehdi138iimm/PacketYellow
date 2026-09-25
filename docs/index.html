@@ -8,31 +8,32 @@
 <meta property="og:title" content="PacketYellow">
 <meta property="og:description" content="پکتات کجا رفتن؟ ما دقیق بهت میگیم.">
 <meta name="theme-color" content="#f2d21c">
+<script>document.documentElement.className+=" js";setTimeout(function(){if(!window.__pyOk){var e=document.querySelectorAll(".rv");for(var i=0;i<e.length;i++)e[i].className+=" in";}},2500);</script>
 <link rel="icon" href="icon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --y: oklch(0.89 0.175 99);
-  --y-deep: oklch(0.8 0.17 90);
-  --y-soft: oklch(0.94 0.1 99);
-  --ink: oklch(0.19 0.02 95);
-  --ink-2: oklch(0.32 0.03 95);
-  --ink-3: oklch(0.45 0.04 95);
-  --d0: oklch(0.145 0.008 100);
-  --d1: oklch(0.18 0.009 100);
-  --d2: oklch(0.215 0.01 100);
-  --d3: oklch(0.26 0.012 100);
-  --line: oklch(0.29 0.012 100);
-  --t1: oklch(0.95 0.01 100);
-  --t2: oklch(0.76 0.014 100);
-  --t3: oklch(0.6 0.014 100);
-  --good: oklch(0.78 0.16 155);
-  --warn: oklch(0.8 0.14 70);
-  --bad: oklch(0.68 0.19 22);
-  --good-bg: oklch(0.27 0.05 155);
-  --warn-bg: oklch(0.28 0.05 70);
-  --bad-bg: oklch(0.27 0.06 22);
+  --y: #f8db2d;
+  --y-deep: #e8b700;
+  --y-soft: #fced9e;
+  --ink: #171409;
+  --ink-2: #383321;
+  --ink-3: #5c553c;
+  --d0: #0b0a07;
+  --d1: #12120d;
+  --d2: #1a1a14;
+  --d3: #25241e;
+  --line: #2d2c25;
+  --t1: #f0efe7;
+  --t2: #b3b1a7;
+  --t3: #828177;
+  --good: #4ed589;
+  --warn: #f7ac4d;
+  --bad: #f75c61;
+  --good-bg: #0f2e1b;
+  --warn-bg: #382409;
+  --bad-bg: #3f1919;
   --mono: "JetBrains Mono", ui-monospace, monospace;
   --ease: cubic-bezier(0.16, 1, 0.3, 1);
   --wrap: min(1200px, 100% - 48px);
@@ -45,7 +46,7 @@ h1,h2,h3{text-wrap:balance;line-height:1.2}
 p{text-wrap:pretty}
 .num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
 :focus-visible{outline:3px solid var(--y);outline-offset:3px;border-radius:8px}
-.wrap{width:var(--wrap);margin-inline:auto}
+.wrap{width:var(--wrap);margin-left:auto;margin-right:auto}
 kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line);border-bottom-width:3px;border-radius:7px;padding:1px 8px;color:var(--t1)}
 [hidden]{display:none!important}
 
@@ -53,9 +54,9 @@ kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line)
 .btn{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 22px;border-radius:12px;font-weight:700;font-size:1rem;text-decoration:none;cursor:pointer;border:2px solid transparent;transition:transform .15s var(--ease),background .15s}
 .btn:active{transform:scale(.97)}
 .btn-ink{background:var(--ink);color:var(--y)}
-.btn-ink:hover{background:oklch(0.26 0.025 95)}
+.btn-ink:hover{background:#282416}
 .btn-line{border-color:var(--ink);color:var(--ink)}
-.btn-line:hover{background:oklch(0.84 0.16 97)}
+.btn-line:hover{background:#e8ca33}
 .btn-y{background:var(--y);color:var(--ink)}
 .btn-y:hover{background:var(--y-deep)}
 .btn-ghost{border-color:var(--line);color:var(--t1)}
@@ -69,7 +70,7 @@ kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line)
 .brand{display:flex;align-items:center;gap:10px;text-decoration:none;direction:ltr}
 .brand img{width:36px;height:36px}
 .brand b{font-weight:900;font-size:1.15rem;letter-spacing:-.01em}
-.nav ul{display:flex;gap:22px;list-style:none;margin-inline-end:auto;font-weight:500;font-size:.95rem}
+.nav ul{display:flex;gap:22px;list-style:none;margin-left:auto;margin-inline-end:auto;font-weight:500;font-size:.95rem}
 .nav ul a{text-decoration:none;opacity:.8}
 .nav ul a:hover{opacity:1;text-decoration:underline;text-underline-offset:6px;text-decoration-thickness:2px}
 .gh{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:10px;border:2px solid currentColor;text-decoration:none;font-weight:700;font-size:.9rem}
@@ -82,7 +83,7 @@ kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line)
 .hero{background:var(--y);color:var(--ink);position:relative;overflow:hidden;padding:56px 0 0}
 .hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 .85rem var(--mono);direction:ltr;background:var(--ink);color:var(--y);border-radius:999px;padding:4px 14px 4px 6px}
-.eyebrow i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--good);margin-inline:6px}
+.eyebrow i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--good);margin-left:6px;margin-right:6px}
 .hero h1{font-size:clamp(2.6rem,6.2vw,5.4rem);font-weight:900;letter-spacing:-.02em;margin:22px 0 20px;line-height:1.08}
 .hero h1 span{display:block;font-size:.5em;font-weight:700;color:var(--ink-2);margin-top:14px;letter-spacing:0}
 .hero p.lead{font-size:1.2rem;max-width:34ch;color:var(--ink-2);margin-bottom:32px}
@@ -91,7 +92,7 @@ kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line)
 .meta b{color:var(--ink);font-weight:700}
 
 /* app window mock */
-.win{background:var(--d0);color:var(--t1);border-radius:18px;border:1px solid oklch(0.35 0.05 95);box-shadow:0 40px 80px -30px oklch(0.3 0.08 90 / .55);overflow:hidden;transform:rotate(-1.2deg);font-size:.85rem}
+.win{background:var(--d0);color:var(--t1);border-radius:18px;border:1px solid #433a1a;box-shadow:0 40px 80px -30px rgba(61,43,0,.55);overflow:hidden;transform:rotate(-1.2deg);font-size:.85rem}
 .win-bar{display:flex;align-items:center;gap:10px;height:38px;padding:0 14px;border-bottom:1px solid var(--line);direction:ltr}
 .win-bar img{width:18px;height:18px}
 .win-bar b{font-weight:900;font-size:.85rem}
@@ -107,22 +108,22 @@ kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line)
 .st{display:flex;flex-direction:column}
 .st .num{font-size:1.15rem;font-weight:600}
 .st span:last-child{font-size:.72rem;color:var(--t3)}
-.verdict{margin-inline-start:auto;text-align:left}
+.verdict{margin-right:auto;margin-inline-start:auto;text-align:left}
 .verdict b{display:block;font-size:1rem}
 .verdict span{font-size:.72rem;color:var(--t3)}
 .chart{width:100%;height:150px;display:block;direction:ltr;background:var(--d1);border-radius:12px}
-.chart .area{fill:oklch(0.3 0.06 100)}
+.chart .area{fill:#352e02}
 .chart .ln{fill:none;stroke:var(--y);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .chart .g{stroke:var(--line);vector-effect:non-scaling-stroke}
 .seg{display:inline-flex;background:var(--d2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
 .seg button{border:0;background:transparent;color:var(--t2);height:28px;padding:0 12px;border-radius:7px;font:600 .78rem Vazirmatn,sans-serif;cursor:pointer}
 .seg button[aria-checked=true]{background:var(--y);color:var(--ink)}
 .win-head{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.win-head h3{font-size:1.05rem;font-weight:900;margin-inline-end:auto}
+.win-head h3{font-size:1.05rem;font-weight:900;margin-left:auto;margin-inline-end:auto}
 .good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
 
 /* marquee */
-.marquee{background:var(--ink);color:var(--y);margin-top:64px;overflow:hidden;border-block:1px solid oklch(0.3 0.04 95);direction:ltr}
+.marquee{background:var(--ink);color:var(--y);margin-top:64px;overflow:hidden;border-top:1px solid #342e15;border-bottom:1px solid #342e15;direction:ltr}
 .marquee .track{display:flex;gap:40px;width:max-content;padding:16px 0;animation:mq 60s linear infinite;font:600 .95rem var(--mono)}
 .marquee span{white-space:nowrap}
 .marquee em{font-style:normal;color:var(--t2);margin-left:8px}
@@ -147,7 +148,7 @@ h2{font-size:clamp(2rem,4vw,3.2rem);font-weight:900;letter-spacing:-.015em;margi
 .stage{position:sticky;top:96px;background:var(--d1);border:1px solid var(--line);border-radius:20px;min-height:460px;overflow:hidden;display:flex;flex-direction:column}
 .stage-bar{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--line);font-size:.85rem;color:var(--t3)}
 .stage-bar b{color:var(--t1);font-size:1rem}
-.stage-bar .prog{margin-inline-start:auto;width:80px;height:3px;background:var(--d3);border-radius:2px;overflow:hidden;direction:ltr}
+.stage-bar .prog{margin-left:auto;width:80px;height:3px;background:var(--d3);border-radius:2px;overflow:hidden;direction:ltr}
 .stage-bar .prog i{display:block;height:100%;width:100%;background:var(--y);transform-origin:left;transform:scaleX(0)}
 .stage-bar .prog i.run{animation:prog 6s linear forwards}
 @keyframes prog{to{transform:scaleX(1)}}
@@ -164,7 +165,7 @@ td.num{text-align:right}
 .meter{height:6px;border-radius:3px;background:var(--d3);overflow:hidden;direction:ltr;min-width:80px}
 .meter span{display:block;height:100%;border-radius:3px;transform-origin:left;animation:grow .8s var(--ease) both}
 @keyframes grow{from{transform:scaleX(0)}}
-tr.best td{background:oklch(0.27 0.045 102)}
+tr.best td{background:#2b270a}
 .star{color:var(--y)}
 .speed2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .speed2 div{background:var(--d2);border-radius:14px;padding:22px}
@@ -174,7 +175,7 @@ tr.best td{background:oklch(0.27 0.045 102)}
 .kv{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.9rem}
 .kv:last-child{border:0}.kv span{color:var(--t3)}
 .badge{display:inline-flex;height:22px;align-items:center;padding:0 9px;border-radius:11px;font-size:.75rem;background:var(--d3);color:var(--t2)}
-.badge.r{background:var(--bad-bg);color:var(--bad)}.badge.g{background:var(--good-bg);color:var(--good)}.badge.y{background:oklch(0.27 0.045 102);color:var(--y)}
+.badge.r{background:var(--bad-bg);color:var(--bad)}.badge.g{background:var(--good-bg);color:var(--good)}.badge.y{background:#2b270a;color:var(--y)}
 .lrow{display:grid;grid-template-columns:96px 56px 1fr;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:.82rem}
 .lrow .lt{color:var(--t3)} .lrow.e{color:var(--bad)} .lrow.w .ll{color:var(--warn)}
 .legend2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -226,7 +227,7 @@ tr.best td{background:oklch(0.27 0.045 102)}
 .dots i{width:22px;height:6px;border-radius:3px;background:var(--d3);transition:background .3s}
 
 /* ---------- download ---------- */
-.dl{background:var(--d1);border-block:1px solid var(--line)}
+.dl{background:var(--d1);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;margin-top:40px}
 .rel-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin-bottom:20px}
 .rel-head .num{font-size:2.6rem;font-weight:800;color:var(--y);letter-spacing:-.02em}
@@ -243,18 +244,18 @@ tr.best td{background:oklch(0.27 0.045 102)}
 .notes{background:var(--d0);border:1px solid var(--line);border-radius:16px;padding:20px 22px;max-height:420px;overflow:auto;font-size:.92rem;color:var(--t2)}
 .notes h4{color:var(--t1);font-size:1rem;margin:14px 0 6px}
 .notes h4:first-child{margin-top:0}
-.notes ul{padding-inline-start:20px;display:flex;flex-direction:column;gap:4px}
+.notes ul{padding-right:20px;padding-inline-start:20px;display:flex;flex-direction:column;gap:4px}
 .notes code{font:.85em var(--mono);background:var(--d3);padding:1px 6px;border-radius:5px}
 .vers{display:flex;flex-direction:column;gap:10px}
 .vers h3{font-size:1.1rem;font-weight:900;margin-bottom:6px}
 .ver{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:14px;background:var(--d2);border:1px solid var(--line);text-decoration:none;transition:border-color .15s,background .15s}
 .ver:hover{border-color:var(--y);background:var(--d3)}
 .ver .num{font-size:1.15rem;font-weight:800;color:var(--t1)}
-.ver small{color:var(--t3);font-size:.82rem;margin-inline-start:auto}
+.ver small{color:var(--t3);font-size:.82rem;margin-right:auto;margin-inline-start:auto}
 .ver.next{border-style:dashed;background:transparent;cursor:default}
 .ver.next:hover{border-color:var(--line);background:transparent}
 .ver.next .num{color:var(--y)}
-.req{margin-top:10px;padding-inline-start:20px;color:var(--t2);font-size:.88rem;display:flex;flex-direction:column;gap:2px}
+.req{margin-top:10px;padding-right:20px;padding-inline-start:20px;color:var(--t2);font-size:.88rem;display:flex;flex-direction:column;gap:2px}
 .dl-empty{padding:24px;border:1px dashed var(--line);border-radius:14px;color:var(--t2)}
 .dl-empty b{color:var(--t1);display:block;margin-bottom:6px}
 .build{margin-top:22px;font-size:.9rem;color:var(--t3)}
@@ -266,7 +267,7 @@ tr.best td{background:oklch(0.27 0.045 102)}
 .faq details{border-bottom:1px solid var(--line)}
 .faq summary{list-style:none;cursor:pointer;padding:22px 0;font-weight:700;font-size:1.1rem;display:flex;gap:16px;align-items:center}
 .faq summary::-webkit-details-marker{display:none}
-.faq summary::after{content:"+";margin-inline-start:auto;font:600 1.4rem var(--mono);color:var(--y);transition:transform .3s var(--ease)}
+.faq summary::after{content:"+";margin-right:auto;margin-inline-start:auto;font:600 1.4rem var(--mono);color:var(--y);transition:transform .3s var(--ease)}
 .faq details[open] summary::after{transform:rotate(45deg)}
 .faq details p{padding:0 0 24px;color:var(--t2);max-width:68ch}
 
@@ -277,14 +278,11 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
 .foot-top h2 small{display:block;font-size:.35em;font-weight:500;color:var(--ink-2);margin-top:10px}
 .foot-bot{margin-top:56px;padding-top:20px;border-top:2px solid var(--ink);display:flex;gap:24px;flex-wrap:wrap;font-size:.9rem;color:var(--ink-2)}
 .foot-bot a{font-weight:700;color:var(--ink)}
-.foot-bot .r{margin-inline-start:auto}
+.foot-bot .r{margin-right:auto;margin-inline-start:auto}
 
 /* ---------- reveal ---------- */
-@media (prefers-reduced-motion:no-preference){
-  .rv{opacity:0;transform:translateY(24px);transition:opacity .8s var(--ease),transform .8s var(--ease);transition-delay:calc(var(--i,0) * 70ms)}
-  .rv.in{opacity:1;transform:none}
-}
-@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.js .rv{opacity:0;-webkit-transform:translateY(24px);transform:translateY(24px);transition:opacity .8s var(--ease),transform .8s var(--ease),-webkit-transform .8s var(--ease)}
+.js .rv.in{opacity:1;-webkit-transform:none;transform:none}
 
 /* ---------- responsive ---------- */
 @media (max-width:1000px){
@@ -503,10 +501,10 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
 const REPO = 'Mehdi138iimm/PacketYellow';
 const REPO_URL = 'https://github.com/' + REPO;
 const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const q = ms => ms == null ? 'bad' : ms < 60 ? 'good' : ms < 120 ? 'warn' : 'bad';
 const fa = n => Number(n).toLocaleString('fa-IR');
-const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const reduce = false; // animations always on, in every browser
 
 /* ---------- nav colour flips over dark sections ---------- */
 const nav = $('nav');
@@ -560,7 +558,7 @@ const TOOLS = [
     <p class="note">هدف دلخواه هم می‌تونی بذاری: سرور بازی خودت، با host:port یا یه آدرس https.</p>` },
   { n: 'تست سایت‌ها', d: 'باز، فیلتر DNS، فیلتر SNI، تحریم یا قطعی', b: () => `
     <table><thead><tr><th>سایت</th><th>وضعیت</th><th>پینگ</th><th>پاسخ</th></tr></thead><tbody>
-    ${[['google.com', 'ok', 'باز', 52, 310], ['youtube.com', 'no', 'فیلتر (SNI/TLS)', 58, null], ['instagram.com', 'no', 'فیلتر (DNS)', null, null], ['developer.android.com', 'slow', 'تحریم / محدود', 61, 420], ['digikala.com', 'ok', 'باز', 9, 180], ['chatgpt.com', 'slow', 'تحریم / محدود', 47, 390]].map(([s, c, t, p, h]) => `<tr><td class="mono">${s}</td><td><span class="tag ${c}">${t}</span></td><td class="num">${p ?? '--'}${p ? ' ms' : ''}</td><td class="num">${h ?? '--'}${h ? ' ms' : ''}</td></tr>`).join('')}</tbody></table>` },
+    ${[['google.com', 'ok', 'باز', 52, 310], ['youtube.com', 'no', 'فیلتر (SNI/TLS)', 58, null], ['instagram.com', 'no', 'فیلتر (DNS)', null, null], ['developer.android.com', 'slow', 'تحریم / محدود', 61, 420], ['digikala.com', 'ok', 'باز', 9, 180], ['chatgpt.com', 'slow', 'تحریم / محدود', 47, 390]].map(([s, c, t, p, h]) => `<tr><td class="mono">${s}</td><td><span class="tag ${c}">${t}</span></td><td class="num">${p == null ? '--' : p}${p ? ' ms' : ''}</td><td class="num">${h == null ? '--' : h}${h ? ' ms' : ''}</td></tr>`).join('')}</tbody></table>` },
   { n: 'پینگ بازی‌ها', d: '۲۶۶ بازی، بهترین منطقه ستاره می‌گیره', b: () => `
     <table><thead><tr><th>بازی / منطقه</th><th>پینگ</th><th></th><th>لاس</th></tr></thead><tbody>
     ${[['Valorant', 'Bahrain', 38, 1], ['Valorant', 'Istanbul', 71, 0], ['PUBG Mobile', 'Middle East', 61, 1], ['Counter-Strike 2', 'Steam · Dubai', 52, 1], ['EA Sports FC 25', 'Frankfurt', 83, 1], ['Fortnite', 'NA-East', 188, 1]].map(([g, r, p, s], i) => `<tr class="${i === 0 ? 'best' : ''}"><td>${g}${s && i < 5 && [0, 2, 3, 4].includes(i) ? ' <span class="star">★</span>' : ''}<br><small class="mono" style="color:var(--t3)">${r}</small></td><td class="num ${q(p)}">${p} ms</td><td>${bar(p / 2, q(p))}</td><td class="num">0%</td></tr>`).join('')}</tbody></table>` },
@@ -609,7 +607,7 @@ document.addEventListener('keydown', e => {
   if (i >= 1 && i <= 9) { showTool(i - 1, true); const r = $('tools').getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) $('tools').scrollIntoView(); }
 });
 // only auto-cycle while the section is on screen
-new IntersectionObserver(([en]) => { if (!tAuto) return; if (en.isIntersecting) showTool(tCur); else clearTimeout(tTimer); }, { threshold: .3 }).observe($('stage'));
+if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => { if (!tAuto) return; if (en.isIntersecting) showTool(tCur); else clearTimeout(tTimer); }, { threshold: .3 }).observe($('stage'));
 showTool(0);
 
 /* ---------- VPN switch demo ---------- */
@@ -634,10 +632,10 @@ const PROBE_URLS = [
   'https://1.1.1.1/cdn-cgi/trace'
 ];
 async function hit(url, ms = 4000) {
-  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
+  const ctl = typeof AbortController === 'function' ? new AbortController() : null; const t = setTimeout(() => ctl && ctl.abort(), ms);
   const t0 = performance.now();
   try {
-    await fetch(url + (url.includes('?') ? '&' : '?') + 'py=' + Math.random().toString(36).slice(2), { mode: 'no-cors', cache: 'no-store', signal: ctl.signal });
+    await fetch(url + (url.includes('?') ? '&' : '?') + 'py=' + Math.random().toString(36).slice(2), { mode: 'no-cors', cache: 'no-store', signal: ctl ? ctl.signal : undefined });
     return performance.now() - t0;
   } finally { clearTimeout(t); }
 }
@@ -647,12 +645,12 @@ async function probe() {
   $('pNum').className = 'num'; $('pNum').textContent = '…';
   $('pTxt').textContent = 'داره یه مسیر باز تا Cloudflare پیدا می‌کنه...';
   let url = null; // warm-up pays DNS + TLS, and picks the first reachable endpoint
-  for (const u of PROBE_URLS) { try { await hit(u); url = u; break; } catch {} }
+  for (const u of PROBE_URLS) { try { await hit(u); url = u; break; } catch (_e) {} }
   const res = [];
   if (url) {
     for (let i = 0; i < dots.length; i++) {
       try { const ms = await hit(url, 3000); res.push(ms); dots[i].style.background = `var(--${q(ms)})`; }
-      catch { dots[i].style.background = 'var(--bad)'; }
+      catch (_e) { dots[i].style.background = 'var(--bad)'; }
       if (res.length) $('pNum').textContent = Math.round([...res].sort((a, b) => a - b)[Math.floor(res.length / 2)]);
       await new Promise(r => setTimeout(r, 250));
     }
@@ -696,7 +694,7 @@ async function gh() {
   fetch('https://api.github.com/repos/' + REPO).then(r => r.ok ? r.json() : null).then(j => { $('stars').textContent = j ? fa(j.stargazers_count) : '★'; }).catch(() => { $('stars').textContent = '★'; });
   let r;
   try { r = await fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=30', { headers: { Accept: 'application/vnd.github+json' } }); }
-  catch { return noRelease('گیت‌هاب الان جواب نداد.'); }
+  catch (_e) { return noRelease('گیت‌هاب الان جواب نداد.'); }
   if (!r.ok) return noRelease(r.status === 403 ? 'گیت‌هاب محدودیت درخواست گذاشته؛ چند دقیقه دیگه.' : 'ریلیزها خونده نشد.');
   const list = (await r.json()).filter(x => !x.draft);
   if (!list.length) return noRelease('هنوز نسخه‌ای روی گیت‌هاب منتشر نشده.');
@@ -717,8 +715,16 @@ async function gh() {
 gh();
 
 /* ---------- reveal on scroll ---------- */
-const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
-document.querySelectorAll('.rv').forEach((el, i) => { el.style.setProperty('--i', i % 6); io.observe(el); });
+const rvs = document.querySelectorAll('.rv');
+for (let i = 0; i < rvs.length; i++) rvs[i].style.transitionDelay = (i % 6) * 70 + 'ms';
+if ('IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  for (let i = 0; i < rvs.length; i++) io.observe(rvs[i]);
+} else {
+  const show = () => { for (let i = 0; i < rvs.length; i++) { const r = rvs[i].getBoundingClientRect(); if (r.top < innerHeight * 0.95) rvs[i].classList.add('in'); } };
+  addEventListener('scroll', show, { passive: true }); addEventListener('resize', show); show();
+}
+window.__pyOk = true;
 </script>
 </body>
 </html>
