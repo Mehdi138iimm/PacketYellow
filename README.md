@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/banner-1.gif" alt="PacketYellow" width="100%"/>
+[assets/banner-1.gif](assets/banner-1.gif)
 
 <br/>
 
@@ -8,26 +8,28 @@
 
 **ابزار دسکتاپ تست شبکه، ساخته‌شده برای واقعیتِ اینترنت ایران**
 
-*Ping · Jitter · Packet Loss · DNS · Speed · Filtering: all measured natively in Rust*
+*Ping · Jitter · Packet Loss · DNS · Speed · Filtering · Auto VPN detection: all measured natively in Rust*
 
 <br/>
 
-![Version](https://img.shields.io/badge/version-0.3.1-FFCC00?style=for-the-badge&labelColor=0A0A0C)
-![Tauri](https://img.shields.io/badge/Tauri-2-FFC131?style=for-the-badge&logo=tauri&logoColor=white&labelColor=0A0A0C)
-![Rust](https://img.shields.io/badge/Rust-core-DEA584?style=for-the-badge&logo=rust&logoColor=white&labelColor=0A0A0C)
-![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white&labelColor=0A0A0C)
-![RTL](https://img.shields.io/badge/UI-فارسی%20RTL-239F40?style=for-the-badge&labelColor=0A0A0C)
+[Version](https://img.shields.io/badge/version-0.3.2-FFCC00?style=for-the-badge&labelColor=0A0A0C)
+[Tauri](https://img.shields.io/badge/Tauri-2-FFC131?style=for-the-badge&logo=tauri&logoColor=white&labelColor=0A0A0C)
+[Rust](https://img.shields.io/badge/Rust-core-DEA584?style=for-the-badge&logo=rust&logoColor=white&labelColor=0A0A0C)
+[Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white&labelColor=0A0A0C)
+[RTL](https://img.shields.io/badge/UI-فارسی%20RTL-239F40?style=for-the-badge&labelColor=0A0A0C)
 
-![Stars](https://img.shields.io/github/stars/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
-![Downloads](https://img.shields.io/github/downloads/Mehdi138iimm/PacketYellow/total?style=flat-square&color=FFCC00&labelColor=0A0A0C)
-![Last commit](https://img.shields.io/github/last-commit/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+[Stars](https://img.shields.io/github/stars/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+[Downloads](https://img.shields.io/github/downloads/Mehdi138iimm/PacketYellow/total?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+[Latest release](https://img.shields.io/github/v/release/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C&label=release)
+[Last commit](https://img.shields.io/github/last-commit/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
 
 <br/>
 
 [**⬇️ دانلود**](https://github.com/Mehdi138iimm/PacketYellow/releases/latest) &nbsp;•&nbsp;
+[**🌐 سایت**](https://mehdi138iimm.github.io/PacketYellow/) &nbsp;•&nbsp;
 [**✨ امکانات**](#-امکانات) &nbsp;•&nbsp;
+[**🛡️ VPN خودکار**](#️-حالت-خودکار-تشخیص-vpn) &nbsp;•&nbsp;
 [**🚀 اجرا**](#-اجرا-از-سورس) &nbsp;•&nbsp;
-[**🧱 ساختار**](#-ساختار-پروژه) &nbsp;•&nbsp;
 [**📝 تغییرات**](#-تغییرات)
 
 </div>
@@ -38,7 +40,7 @@
 
 ## 💡 چرا PacketYellow؟
 
-اسپیدتست‌های معمولی فقط یه عدد بهت میدن. ولی تو ایران سؤال واقعی اینه: **چرا این سایت باز نمیشه؟ فیلتره، تحریمه یا قطعه؟ کدوم DNS الان جواب میده؟ پینگم تا سرور بازی چنده؟**
+اسپیدتست‌های معمولی فقط یه عدد بهت میدن. ولی تو ایران سؤال واقعی اینه: **چرا این سایت باز نمیشه؟ فیلتره، تحریمه یا قطعه؟ کدوم DNS الان جواب میده؟ پینگم تا سرور بازی چنده؟ پشت VPN عددی که می‌بینم راسته؟**
 
 PacketYellow همه‌ی این‌ها رو یه‌جا جواب میده. همه‌ی اندازه‌گیری‌ها **فقط در Rust** انجام میشه و رابط کاربری فقط عدد واقعی رو نشون میده، بدون حدس و بدون عدد فیک.
 
@@ -46,24 +48,45 @@ PacketYellow همه‌ی این‌ها رو یه‌جا جواب میده. هم�
 
 ## ✨ امکانات
 
-<p align="center"><img src="assets/banner-2.gif" alt="PacketYellow features" width="100%"/></p>
+<p align="center">[assets/banner-2.gif](assets/banner-2.gif)</p>
 
 | | بخش | چی کار می‌کنه |
 |:-:|---|---|
-| 📈 | **داشبورد زنده** | پینگ لحظه‌ای، جیتر، پکت لاس و نمودار زنده (هر ثانیه یه تیک) |
+| 📈 | **داشبورد زنده** | پینگ لحظه‌ای، جیتر، پکت لاس و نمودار زنده (هر ثانیه یه تیک) + **حالت خودکار TCP / HTTP** |
+| 🛡️ | **تشخیص خودکار VPN** 🆕 | هر ۴ ثانیه شبکه رو چک می‌کنه و پشت VPN خودش میره روی حالت HTTP، که عدد جعلی نبینی |
 | 🌐 | **تست سایت‌ها** | ۴ مرحله: DNS، پینگ TCP، HTTPS، RTT واقعی + تشخیص دقیق دلیل: **فیلتر DNS** (`10.10.34.x`)، **فیلتر SNI/TLS**، **تحریم** (403/451)، قطعی، تایم‌اوت |
 | 🎮 | **پینگ بازی‌ها** | **۲۶۶ بازی آنلاین** با جستجو و دسته‌بندی؛ سرورهای واقعی Supercell، Battle.net، Riot، Minecraft و لیست زنده‌ی Steam برای CS2 و Dota 2 |
 | ⚡ | **تست سرعت** | ۴ اتصال دانلود / ۳ آپلود روی Cloudflare، حذف slow-start، تاخیر زیر بار (Bufferbloat)، حجم مصرفی |
 | 🧭 | **بنچمارک DNS** | ۲۰ DNS آماده (Cloudflare، Google، Shecan، ...) + DNS دلخواه؛ میانه، کمینه، درصد موفقیت و تشخیص پاسخ فیلترشده |
-| 🛡️ | **سرورهای تونل** | پینگ لینک‌های `vless` / `vmess` / `trojan` / `ss` / `hysteria2` / `tuic` + حالت HTTP از داخل تونل و تشخیص Fake-IP |
+| 🔐 | **سرورهای تونل** | پینگ لینک‌های `vless` / `vmess` / `trojan` / `ss` / `hysteria2` / `tuic` + حالت HTTP از داخل تونل و تشخیص Fake-IP |
 | 🔎 | **اطلاعات شبکه** | IPv4/IPv6، ISP، ASN، شناسایی اپراتورهای ایرانی، تشخیص VPN / پروکسی / WARP / CGNAT، Wi‑Fi و هات‌اسپات، MTU و گیت‌وی |
 | 🧾 | **لاگ** | خطاها و رویدادهای Rust و UI با فیلتر، جستجو، کپی و ذخیره (حتی panicها) |
+
+<br/>
+
+## 🛡️ حالت خودکار: تشخیص VPN
+
+پشت VPN پینگ TCP دروغ میگه: یا به سرور VPN می‌خوره یا به یه آدرس جعلی. PacketYellow **هر ۴ ثانیه** شبکه رو نگاه می‌کنه و خودش بین TCP و HTTP جابه‌جا میشه. تو فقط بازیتو بکن.
+
+| حالت | کی فعال میشه | چی می‌سنجه |
+|---|---|---|
+| **TCP** | بدون VPN | زمان دست‌دادن TCP تا سرور، دقیق‌ترین حالت ممکن |
+| **HTTP** | VPN روشن | درخواست کوچیک روی یه اتصال باز از داخل تونل، پینگ واقعی نه عدد جعلی |
+
+**نشونه‌هایی که بررسی میشن:**
+- 🔌 آداپتور تونل (Wintun / TAP)
+- 🧭 پروکسی سیستم روی `127.0.0.1`
+- 🎭 Fake-IP حالت TUN (`198.18.x`)
+- 🏢 IP خروجی دیتاسنتری
+- 🛣️ روت‌های `0.0.0.0/1` (Full tunnel)
+- ☁️ Cloudflare WARP
 
 <br/>
 
 ## 🎨 طراحی
 
 - 🌙 تم تیره با رنگ امضای **زرد**، بدون glow و سایه‌ی اضافه
+- 🟡 **آیکون جدید** از نسخه‌ی 0.3.2
 - 🇮🇷 رابط کاملاً **فارسی و راست‌چین** با فونت Vazirmatn
 - 🔠 کمترین سایز متن 12px؛ پینگ لحظه‌ای بزرگ‌ترین عنصر صفحه
 - 🪟 تایتل‌بار سفارشی، اسپلش و Onboarding شش‌مرحله‌ای انیمیشنی
@@ -74,7 +97,7 @@ PacketYellow همه‌ی این‌ها رو یه‌جا جواب میده. هم�
 ## 🛠️ تکنولوژی
 
 <p align="center">
-  <img src="https://skillicons.dev/icons?i=rust,tauri,html,css,js,windows" />
+[https://skillicons.dev/icons?i=rust,tauri,html,css,js,windows](https://skillicons.dev/icons?i=rust,tauri,html,css,js,windows)
 </p>
 
 | لایه | ابزار |
@@ -82,6 +105,7 @@ PacketYellow همه‌ی این‌ها رو یه‌جا جواب میده. هم�
 | هسته | Rust · Tokio · reqwest (rustls) · hickory-resolver · if-addrs |
 | اپ دسکتاپ | Tauri 2 |
 | رابط کاربری | HTML / CSS / JavaScript خالص (بدون React و Vite) · Lucide Icons |
+| سایت | HTML تک‌فایلی روی GitHub Pages، ریلیزها رو زنده از API گیت‌هاب می‌خونه |
 
 <br/>
 
@@ -124,17 +148,19 @@ PacketYellow/
 │   ├── probe.rs      → کلاینت HTTP مشترک، تشخیص IP فیلتر و Fake-IP
 │   ├── ping.rs       → پینگ TCP بدون نیاز به ادمین، پینگ موازی چند سرور
 │   ├── stats.rs      → min / avg / max، جیتر، پکت لاس
-│   ├── monitor.rs    → داشبورد زنده (event: monitor://tick)
+│   ├── monitor.rs    → داشبورد زنده (event: monitor://tick) + حالت خودکار
 │   ├── sites.rs      → تست دسترسی سایت‌ها + دلیل باز نشدن
 │   ├── dns.rs        → بنچمارک DNS
 │   ├── speed.rs      → تست سرعت دانلود / آپلود با پیشرفت زنده
-│   ├── netinfo.rs    → IP عمومی، ISP، ASN، اینترفیس‌ها
+│   ├── netinfo.rs    → IP عمومی، ISP، ASN، اینترفیس‌ها، تشخیص VPN
 │   └── applog.rs     → لاگ داخلی اپ
-└── ui/
-    ├── index.html    → ساختار رابط (RTL، تم تیره)
-    ├── style.css     → استایل
-    ├── main.js       → منطق رابط (فقط نمایش داده‌ی Rust)
-    └── games.js      → کاتالوگ بازی‌ها و منطقه‌ی سرورها
+├── ui/
+│   ├── index.html    → ساختار رابط (RTL، تم تیره)
+│   ├── style.css     → استایل
+│   ├── main.js       → منطق رابط (فقط نمایش داده‌ی Rust)
+│   └── games.js      → کاتالوگ بازی‌ها و منطقه‌ی سرورها
+└── docs/
+    └── index.html    → سایت پروژه (GitHub Pages)
 ```
 
 <div dir="rtl">
@@ -144,6 +170,17 @@ PacketYellow/
 ## 📝 تغییرات
 
 <details open>
+<summary><b>v0.3.2</b>: VPN زدی؟ خودش می‌فهمه</summary>
+
+- 🛡️ **حالت خودکار:** تشخیص VPN هر ۴ ثانیه و جابه‌جایی خودکار بین TCP و HTTP
+- 🔍 شش نشونه‌ی تشخیص: Wintun / TAP، پروکسی `127.0.0.1`، Fake-IP، IP دیتاسنتری، روت Full tunnel، WARP
+- ⌨️ رفع تایپ نشدن توی فیلدهای هدف دلخواه، سایت و DNS
+- 🎮 درست شدن اندازه‌ی جستجوی بازی‌ها
+- 🟡 آیکون جدید
+- 🌐 [سایت رسمی PacketYellow](https://mehdi138iimm.github.io/PacketYellow/) با دانلود مستقیم از ریلیزها
+</details>
+
+<details>
 <summary><b>v0.3.1</b>: پایداری و دقت</summary>
 
 - رفع نامرئی شدن UI وقتی انیمیشن‌های ویندوز خاموشه
@@ -176,6 +213,8 @@ PacketYellow/
 
 ## 🗺️ نقشه‌ی راه
 
+- [x] تشخیص خودکار VPN و جابه‌جایی TCP / HTTP
+- [x] سایت پروژه
 - [ ] پینگ ICMP واقعی با `surge-ping`
 - [ ] ذخیره‌ی تاریخچه با SQLite
 - [ ] پارس کامل لینک‌های vless / vmess / trojan
@@ -194,22 +233,22 @@ PacketYellow/
 ## 👥 سازنده‌ها
 
 <table>
-  <tr>
-    <td align="center" width="180">
-      <a href="https://github.com/Mehdi138iimm">
-        <img src="https://github.com/Mehdi138iimm.png" width="96" alt="Mehdi Jafari"/><br/><br/>
-        <b>Mehdi Jafari</b>
-      </a><br/>
-      <sub>مهدی جعفری</sub>
-    </td>
-  </tr>
+<tr>
+<td align="center" width="180">
+<a href="https://github.com/Mehdi138iimm">
+[https://github.com/Mehdi138iimm.png](https://github.com/Mehdi138iimm.png)<br/><br/>
+<b>Mehdi Jafari</b>
+</a><br/>
+<sub>مهدی جعفری</sub>
+</td>
+</tr>
 </table>
 
 <br/>
 
 <div align="center">
 
-<img src="assets/cover.gif" alt="PacketYellow" width="100%"/>
+[assets/cover.gif](assets/cover.gif)
 
 <br/>
 
