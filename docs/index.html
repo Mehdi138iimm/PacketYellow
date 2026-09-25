@@ -245,6 +245,16 @@ tr.best td{background:oklch(0.27 0.045 102)}
 .notes h4:first-child{margin-top:0}
 .notes ul{padding-inline-start:20px;display:flex;flex-direction:column;gap:4px}
 .notes code{font:.85em var(--mono);background:var(--d3);padding:1px 6px;border-radius:5px}
+.vers{display:flex;flex-direction:column;gap:10px}
+.vers h3{font-size:1.1rem;font-weight:900;margin-bottom:6px}
+.ver{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:14px;background:var(--d2);border:1px solid var(--line);text-decoration:none;transition:border-color .15s,background .15s}
+.ver:hover{border-color:var(--y);background:var(--d3)}
+.ver .num{font-size:1.15rem;font-weight:800;color:var(--t1)}
+.ver small{color:var(--t3);font-size:.82rem;margin-inline-start:auto}
+.ver.next{border-style:dashed;background:transparent;cursor:default}
+.ver.next:hover{border-color:var(--line);background:transparent}
+.ver.next .num{color:var(--y)}
+.req{margin-top:10px;padding-inline-start:20px;color:var(--t2);font-size:.88rem;display:flex;flex-direction:column;gap:2px}
 .dl-empty{padding:24px;border:1px dashed var(--line);border-radius:14px;color:var(--t2)}
 .dl-empty b{color:var(--t1);display:block;margin-bottom:6px}
 .build{margin-top:22px;font-size:.9rem;color:var(--t3)}
@@ -449,14 +459,21 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
         <div class="assets" id="assets"><div class="skel"></div><div class="skel"></div></div>
         <div class="build">
           یا خودت بسازش:
+          <ul class="req"><li>Rust و Node.js LTS</li><li>ویندوز: Microsoft C++ Build Tools و WebView2</li></ul>
           <pre>git clone https://github.com/Mehdi138iimm/PacketYellow.git
 cd PacketYellow
 npm install
-npm run build   <span># Rust + Node.js LTS لازمه</span></pre>
+npm run vendor   <span># once: local fonts &amp; icons</span>
+npm run dev      <span># dev mode</span>
+npm run build    <span># build the installer</span></pre>
         </div>
       </div>
       <div>
-        <div class="notes" id="notes"><div class="skel" style="height:18px;margin-bottom:10px"></div><div class="skel" style="height:18px;width:70%;margin-bottom:10px"></div><div class="skel" style="height:18px;width:85%"></div></div>
+        <div class="vers" id="vers">
+          <h3>همه‌ی نسخه‌ها</h3>
+          <div class="ver next"><span class="num">v0.3.3</span><span class="badge y">نسخه‌ی بعدی</span><small>به‌زودی</small></div>
+          <div id="verList"><div class="skel"></div></div>
+        </div>
       </div>
     </div>
   </div>
@@ -620,26 +637,44 @@ $('vpnSw').addEventListener('change', e => {
 });
 
 /* ---------- browser ping (honest: fetch timing, not ICMP) ---------- */
+const PROBE_URLS = [
+  'https://www.cloudflare.com/cdn-cgi/trace',
+  'https://speed.cloudflare.com/__down?bytes=0',
+  'https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js',
+  'https://1.1.1.1/cdn-cgi/trace'
+];
+async function hit(url, ms = 4000) {
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
+  const t0 = performance.now();
+  try {
+    await fetch(url + (url.includes('?') ? '&' : '?') + 'py=' + Math.random().toString(36).slice(2), { mode: 'no-cors', cache: 'no-store', signal: ctl.signal });
+    return performance.now() - t0;
+  } finally { clearTimeout(t); }
+}
 async function probe() {
   const btn = $('pRun'); btn.disabled = true; btn.textContent = 'در حال تست...';
   const dots = [...$('pDots').children]; dots.forEach(d => d.style.background = '');
+  $('pNum').className = 'num'; $('pNum').textContent = '…';
+  $('pTxt').textContent = 'داره یه مسیر باز تا Cloudflare پیدا می‌کنه...';
+  let url = null; // warm-up pays DNS + TLS, and picks the first reachable endpoint
+  for (const u of PROBE_URLS) { try { await hit(u); url = u; break; } catch {} }
   const res = [];
-  for (let i = 0; i < dots.length; i++) {
-    const t0 = performance.now();
-    try {
-      await fetch('https://www.cloudflare.com/cdn-cgi/trace?py=' + Math.random().toString(36).slice(2), { mode: 'no-cors', cache: 'no-store' });
-      const ms = performance.now() - t0; if (i) res.push(ms); // first one pays DNS + TLS
-      dots[i].style.background = `var(--${q(ms)})`;
-    } catch { dots[i].style.background = 'var(--bad)'; }
-    $('pNum').textContent = res.length ? Math.round([...res].sort((a, b) => a - b)[Math.floor(res.length / 2)]) : '--';
-    await new Promise(r => setTimeout(r, 250));
-  }
+  if (url) {
+    for (let i = 0; i < dots.length; i++) {
+      try { const ms = await hit(url, 3000); res.push(ms); dots[i].style.background = `var(--${q(ms)})`; }
+      catch { dots[i].style.background = 'var(--bad)'; }
+      if (res.length) $('pNum').textContent = Math.round([...res].sort((a, b) => a - b)[Math.floor(res.length / 2)]);
+      await new Promise(r => setTimeout(r, 250));
+    }
+  } else dots.forEach(d => d.style.background = 'var(--bad)');
   if (res.length) {
     const med = [...res].sort((a, b) => a - b)[Math.floor(res.length / 2)];
+    const lost = dots.length - res.length;
     $('pNum').className = 'num ' + q(med);
-    $('pTxt').textContent = med < 60 ? 'خط خوبیه. عدد دقیق و جیتر رو برنامه بهت میده.' : med < 150 ? 'بد نیست، ولی برای بازی رقابتی ببین برنامه چی میگه.' : 'بالاست. برنامه رو بگیر ببین مشکل از خطه، DNS یا VPN.';
+    $('pTxt').textContent = (med < 60 ? 'خط خوبیه. عدد دقیق و جیتر رو برنامه بهت میده.' : med < 150 ? 'بد نیست، ولی برای بازی رقابتی ببین برنامه چی میگه.' : 'بالاست. برنامه رو بگیر ببین مشکل از خطه، DNS یا VPN.') + (lost ? ` (${fa(lost)} از ${fa(dots.length)} درخواست نرسید)` : '');
   } else {
-    $('pNum').className = 'num bad'; $('pTxt').textContent = 'به Cloudflare نرسید. یا اینترنت قطعه یا مسیرش بسته‌ست؛ تست سایت‌های برنامه دقیق میگه کدوم.';
+    $('pNum').className = 'num bad'; $('pNum').textContent = '×';
+    $('pTxt').textContent = 'مرورگرت به هیچ‌کدوم از سرورهای Cloudflare نرسید. ممکنه افزونه‌ی مسدودکننده یا فیلترینگ باشه؛ برنامه دقیق میگه کجا گیر کرده.';
   }
   btn.disabled = false; btn.textContent = 'دوباره';
 }
@@ -660,23 +695,26 @@ function mdLite(s) {
   return out + (inList ? '</ul>' : '');
 }
 const dlIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>';
+const KNOWN = ['v0.3.2', 'v0.3.1'];
+const verRow = (tag, href, sub, pre) => `<a class="ver" href="${esc(href)}" target="_blank" rel="noopener"><span class="num">${esc(tag)}</span>${pre ? '<span class="badge">پیش‌نمایش</span>' : ''}<small>${sub}</small></a>`;
 function noRelease(msg) {
-  $('relHead').innerHTML = '<span class="num">soon</span>';
-  $('assets').innerHTML = `<div class="dl-empty"><b>${msg}</b>تا اون موقع می‌تونی از کد بسازیش یا صفحه‌ی ریلیزها رو ببینی.<div style="margin-top:14px"><a class="btn btn-y" href="${REPO_URL}/releases" target="_blank" rel="noopener">صفحه‌ی ریلیزها</a></div></div>`;
-  $('notes').innerHTML = '<h4>نسخه‌ی بعدی: 0.3.2</h4><ul><li>تشخیص خودکار VPN و جابه‌جایی بین TCP و HTTP</li><li>رفع تایپ نشدن تو فیلدهای هدف دلخواه، سایت و DNS</li><li>درست شدن اندازه‌ی جستجوی بازی‌ها</li><li>آیکون جدید و این سایت</li></ul>';
+  $('relHead').innerHTML = '<span class="num">' + KNOWN[0] + '</span>';
+  $('assets').innerHTML = `<div class="dl-empty"><b>${msg}</b>فایل‌ها رو مستقیم از صفحه‌ی ریلیزهای گیت‌هاب بگیر.<div style="margin-top:14px"><a class="btn btn-y" href="${REPO_URL}/releases" target="_blank" rel="noopener">صفحه‌ی ریلیزها</a></div></div>`;
+  $('verList').innerHTML = `<div class="vers">${KNOWN.map(t => verRow(t, REPO_URL + '/releases', 'گیت‌هاب')).join('')}</div>`;
 }
 async function gh() {
   fetch('https://api.github.com/repos/' + REPO).then(r => r.ok ? r.json() : null).then(j => { $('stars').textContent = j ? fa(j.stargazers_count) : '★'; }).catch(() => { $('stars').textContent = '★'; });
   let r;
-  try { r = await fetch('https://api.github.com/repos/' + REPO + '/releases/latest', { headers: { Accept: 'application/vnd.github+json' } }); }
+  try { r = await fetch('https://api.github.com/repos/' + REPO + '/releases?per_page=30', { headers: { Accept: 'application/vnd.github+json' } }); }
   catch { return noRelease('گیت‌هاب الان جواب نداد.'); }
-  if (r.status === 404) return noRelease('هنوز نسخه‌ای منتشر نشده.');
-  if (!r.ok) return noRelease(r.status === 403 ? 'گیت‌هاب محدودیت درخواست گذاشته؛ چند دقیقه دیگه.' : 'ریلیز خونده نشد.');
-  const rel = await r.json();
+  if (!r.ok) return noRelease(r.status === 403 ? 'گیت‌هاب محدودیت درخواست گذاشته؛ چند دقیقه دیگه.' : 'ریلیزها خونده نشد.');
+  const list = (await r.json()).filter(x => !x.draft);
+  if (!list.length) return noRelease('هنوز نسخه‌ای روی گیت‌هاب منتشر نشده.');
+  const fdate = d => d ? new Date(d).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+  const rel = list[0];
   const tag = rel.tag_name || rel.name || '';
-  const date = rel.published_at ? new Date(rel.published_at).toLocaleDateString('fa-IR', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
   const total = (rel.assets || []).reduce((a, x) => a + (x.download_count || 0), 0);
-  $('relHead').innerHTML = `<span class="num">${esc(tag)}</span><span>${esc(date)}${total ? ` · ${fa(total)} دانلود` : ''}</span>`;
+  $('relHead').innerHTML = `<span class="num">${esc(tag)}</span><span>${esc(fdate(rel.published_at))}${total ? ` · ${fa(total)} دانلود` : ''}</span>`;
   $('heroDlVer').textContent = tag;
   const rank = n => /\.exe$/i.test(n) ? 0 : /\.msi$/i.test(n) ? 1 : 2;
   const assets = (rel.assets || []).filter(a => !/\.(sig|blockmap|json)$/i.test(a.name)).sort((a, b) => rank(a.name) - rank(b.name));
@@ -684,7 +722,7 @@ async function gh() {
   else {
     $('assets').innerHTML = assets.map((a, i) => `<a class="asset${i === 0 ? ' rec' : ''}" href="${esc(a.browser_download_url)}" target="_blank" rel="noopener"><span class="ic">${dlIcon}</span><span><b>${esc(a.name)}</b><small>${fmtSize(a.size)} · ${fa(a.download_count || 0)} دانلود${i === 0 ? ' · پیشنهادی' : ''}</small></span><span class="mono" style="color:var(--t3);font-size:.8rem">${/\.msi$/i.test(a.name) ? 'MSI' : /\.exe$/i.test(a.name) ? 'EXE' : ''}</span></a>`).join('');
   }
-  $('notes').innerHTML = rel.body ? mdLite(rel.body) : '<p>برای این نسخه یادداشتی نوشته نشده.</p>';
+  $('verList').innerHTML = `<div class="vers">${list.map(x => verRow(x.tag_name || x.name, x.html_url, esc(fdate(x.published_at)), x.prerelease)).join('')}</div>`;
 }
 gh();
 
