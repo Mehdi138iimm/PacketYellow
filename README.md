@@ -1,6 +1,6 @@
 <div align="center">
 
-[assets/banner-1.gif](assets/banner-1.gif)
+<img src="assets/banner-1.gif" alt="PacketYellow" width="100%"/>
 
 <br/>
 
@@ -12,16 +12,16 @@
 
 <br/>
 
-[Version](https://img.shields.io/badge/version-0.3.2-FFCC00?style=for-the-badge&labelColor=0A0A0C)
-[Tauri](https://img.shields.io/badge/Tauri-2-FFC131?style=for-the-badge&logo=tauri&logoColor=white&labelColor=0A0A0C)
-[Rust](https://img.shields.io/badge/Rust-core-DEA584?style=for-the-badge&logo=rust&logoColor=white&labelColor=0A0A0C)
-[Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white&labelColor=0A0A0C)
-[RTL](https://img.shields.io/badge/UI-فارسی%20RTL-239F40?style=for-the-badge&labelColor=0A0A0C)
+![Version](https://img.shields.io/badge/version-0.3.2-FFCC00?style=for-the-badge&labelColor=0A0A0C)
+![Tauri](https://img.shields.io/badge/Tauri-2-FFC131?style=for-the-badge&logo=tauri&logoColor=white&labelColor=0A0A0C)
+![Rust](https://img.shields.io/badge/Rust-core-DEA584?style=for-the-badge&logo=rust&logoColor=white&labelColor=0A0A0C)
+![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-0078D4?style=for-the-badge&logo=windows&logoColor=white&labelColor=0A0A0C)
+![RTL](https://img.shields.io/badge/UI-فارسی%20RTL-239F40?style=for-the-badge&labelColor=0A0A0C)
 
-[Stars](https://img.shields.io/github/stars/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
-[Downloads](https://img.shields.io/github/downloads/Mehdi138iimm/PacketYellow/total?style=flat-square&color=FFCC00&labelColor=0A0A0C)
-[Latest release](https://img.shields.io/github/v/release/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C&label=release)
-[Last commit](https://img.shields.io/github/last-commit/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+![Stars](https://img.shields.io/github/stars/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+![Downloads](https://img.shields.io/github/downloads/Mehdi138iimm/PacketYellow/total?style=flat-square&color=FFCC00&labelColor=0A0A0C)
+![Latest release](https://img.shields.io/github/v/release/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C&label=release)
+![Last commit](https://img.shields.io/github/last-commit/Mehdi138iimm/PacketYellow?style=flat-square&color=FFCC00&labelColor=0A0A0C)
 
 <br/>
 
@@ -30,6 +30,7 @@
 [**✨ امکانات**](#-امکانات) &nbsp;•&nbsp;
 [**🛡️ VPN خودکار**](#️-حالت-خودکار-تشخیص-vpn) &nbsp;•&nbsp;
 [**🚀 اجرا**](#-اجرا-از-سورس) &nbsp;•&nbsp;
+[**🧱 ساختار**](#-ساختار-پروژه) &nbsp;•&nbsp;
 [**📝 تغییرات**](#-تغییرات)
 
 </div>
@@ -48,7 +49,7 @@ PacketYellow همه‌ی این‌ها رو یه‌جا جواب میده. هم�
 
 ## ✨ امکانات
 
-<p align="center">[assets/banner-2.gif](assets/banner-2.gif)</p>
+<p align="center"><img src="assets/banner-2.gif" alt="PacketYellow features" width="100%"/></p>
 
 | | بخش | چی کار می‌کنه |
 |:-:|---|---|
@@ -97,7 +98,7 @@ PacketYellow همه‌ی این‌ها رو یه‌جا جواب میده. هم�
 ## 🛠️ تکنولوژی
 
 <p align="center">
-[https://skillicons.dev/icons?i=rust,tauri,html,css,js,windows](https://skillicons.dev/icons?i=rust,tauri,html,css,js,windows)
+  <img src="https://skillicons.dev/icons?i=rust,tauri,html,css,js,windows" />
 </p>
 
 | لایه | ابزار |
@@ -159,8 +160,9 @@ PacketYellow/
 │   ├── style.css     → استایل
 │   ├── main.js       → منطق رابط (فقط نمایش داده‌ی Rust)
 │   └── games.js      → کاتالوگ بازی‌ها و منطقه‌ی سرورها
-└── docs/
-    └── index.html    → سایت پروژه (GitHub Pages)
+├── docs/
+│   └── index.html    → سایت پروژه (GitHub Pages)
+└── assets/           → بنرها و کاور README
 ```
 
 <div dir="rtl">
@@ -233,22 +235,22 @@ PacketYellow/
 ## 👥 سازنده‌ها
 
 <table>
-<tr>
-<td align="center" width="180">
-<a href="https://github.com/Mehdi138iimm">
-[https://github.com/Mehdi138iimm.png](https://github.com/Mehdi138iimm.png)<br/><br/>
-<b>Mehdi Jafari</b>
-</a><br/>
-<sub>مهدی جعفری</sub>
-</td>
-</tr>
+  <tr>
+    <td align="center" width="180">
+      <a href="https://github.com/Mehdi138iimm">
+        <img src="https://github.com/Mehdi138iimm.png" width="96" alt="Mehdi Jafari"/><br/><br/>
+        <b>Mehdi Jafari</b>
+      </a><br/>
+      <sub>مهدی جعفری</sub>
+    </td>
+  </tr>
 </table>
 
 <br/>
 
 <div align="center">
 
-[assets/cover.gif](assets/cover.gif)
+<img src="assets/cover.gif" alt="PacketYellow" width="100%"/>
 
 <br/>
 
