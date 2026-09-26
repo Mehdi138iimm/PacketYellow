@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PacketYellow</title>
-<meta name="description" content="PacketYellow: جعبه‌ابزار شبکه برای اینترنت ایران. پینگ زنده، ۲۶۶ بازی، تست فیلترینگ سایت‌ها، DNS، تست سرعت و تشخیص خودکار VPN. رایگان و متن‌باز.">
+<meta name="description" content="PacketYellow: جعبه‌ابزار شبکه برای اینترنت ایران. پینگ زنده، ۲۶۶ بازی با پایش زنده، تست فیلترینگ سایت‌ها، DNS، تست سرعت کم‌مصرف و کلاینت VPN با هسته‌ی Xray. رایگان و متن‌باز.">
 <meta property="og:title" content="PacketYellow">
 <meta property="og:description" content="پکتات کجا رفتن؟ ما دقیق بهت میگیم.">
 <meta name="theme-color" content="#f2d21c">
@@ -80,7 +80,7 @@ kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line)
 .nav.dark .btn{background:var(--y);color:var(--ink)}
 
 /* ---------- hero (drenched) ---------- */
-.hero{background:var(--y);color:var(--ink);position:relative;overflow:hidden;padding:56px 0 0}
+.hero{background:var(--y);color:var(--ink);position:relative;overflow:hidden;padding:56px 0 88px}
 .hero .wrap{display:grid;grid-template-columns:1.05fr 1fr;gap:48px;align-items:center}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font:600 .85rem var(--mono);direction:ltr;background:var(--ink);color:var(--y);border-radius:999px;padding:4px 14px 4px 6px}
 .eyebrow i{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--good);margin-left:6px;margin-right:6px}
@@ -122,12 +122,28 @@ kbd{font:600 .8rem var(--mono);background:var(--d3);border:1px solid var(--line)
 .win-head h3{font-size:1.05rem;font-weight:900;margin-left:auto;margin-inline-end:auto}
 .good{color:var(--good)}.warn{color:var(--warn)}.bad{color:var(--bad)}
 
-/* marquee */
-.marquee{background:var(--ink);color:var(--y);margin-top:64px;overflow:hidden;border-top:1px solid #342e15;border-bottom:1px solid #342e15;direction:ltr}
-.marquee .track{display:flex;gap:40px;width:max-content;padding:16px 0;animation:mq 60s linear infinite;font:600 .95rem var(--mono)}
-.marquee span{white-space:nowrap}
-.marquee em{font-style:normal;color:var(--t2);margin-left:8px}
-@keyframes mq{to{transform:translateX(-50%)}}
+
+/* ---------- vpn client (0.5) ---------- */
+.beta{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:10px;font:700 .7rem var(--sans,inherit);background:var(--warn-bg);color:var(--warn);vertical-align:middle;margin-right:6px}
+.vpn-grid{display:grid;grid-template-columns:1fr 1.05fr;gap:56px;align-items:start;margin-top:8px}
+.feats{list-style:none;margin-top:28px;display:grid;gap:0}
+.feats li{padding:16px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:130px 1fr;gap:16px;align-items:baseline}
+.feats b{color:var(--y);font-size:.95rem}
+.feats span{color:var(--t2);font-size:.95rem}
+.protos{display:flex;flex-wrap:wrap;gap:6px;margin-top:22px;direction:ltr;justify-content:flex-end}
+.conn{background:var(--d2);border:1px solid var(--line);border-radius:18px;padding:22px}
+.conn h3{font-size:1.05rem;display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.steps{list-style:none;display:grid;gap:10px;margin-bottom:18px}
+.steps li{display:flex;gap:12px;align-items:center;color:var(--t3);font-size:.92rem;transition:color .3s}
+.steps li i{width:22px;height:22px;border-radius:50%;border:2px solid var(--d3);flex:none;display:grid;place-items:center;font:700 .7rem var(--mono);font-style:normal;transition:all .3s}
+.steps li.ok{color:var(--t1)}.steps li.ok i{background:var(--good);border-color:var(--good);color:var(--ink)}
+.steps li.run i{border-color:var(--y);border-top-color:transparent;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.conn .addr{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--d3);border-radius:12px;padding:10px 14px;margin-top:6px}
+.conn .addr b{font:700 1.05rem var(--mono);color:var(--y);direction:ltr}
+.conn .modes{margin-top:14px}
+.conn .modes .kv span{color:var(--t2)}
+@media (max-width:900px){.vpn-grid{grid-template-columns:1fr;gap:32px}.feats li{grid-template-columns:1fr;gap:4px}}
 
 /* ---------- sections ---------- */
 section{padding:112px 0}
@@ -218,6 +234,19 @@ tr.best td{background:#2b270a}
 .vd p{color:var(--t2);font-size:.95rem}
 .vd .tag{justify-self:start}
 
+/* ---------- VPN client demo: connected only after a real request ---------- */
+(() => {
+  const li = [...$('vSteps').children]; let k = 0;
+  const step = () => {
+    li.forEach((el, i) => { el.className = i < k ? 'ok' : i === k ? 'run' : ''; });
+    k = k >= li.length ? 0 : k + 1;
+    setTimeout(step, k === 0 ? 2600 : 900);
+  };
+  if (reduce) li.forEach(el => el.className = 'ok');
+  else if ('IntersectionObserver' in window) new IntersectionObserver(([en], o) => { if (en.isIntersecting) { o.disconnect(); step(); } }, { threshold: .4 }).observe($('vSteps'));
+  else step();
+})();
+
 /* ---------- browser ping ---------- */
 .probe{margin-top:64px;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;background:var(--d1);border:1px solid var(--line);border-radius:20px;padding:28px 32px}
 .probe .big .num{font-size:3rem}
@@ -242,6 +271,7 @@ tr.best td{background:#2b270a}
 .skel{height:72px;border-radius:14px;background:linear-gradient(90deg,var(--d2) 0%,var(--d3) 50%,var(--d2) 100%);background-size:200% 100%;animation:sk 1.4s linear infinite}
 @keyframes sk{to{background-position:-200% 0}}
 .notes{background:var(--d0);border:1px solid var(--line);border-radius:16px;padding:20px 22px;max-height:420px;overflow:auto;font-size:.92rem;color:var(--t2)}
+.notes .note{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);color:var(--t3);font-size:.85rem}
 .notes h4{color:var(--t1);font-size:1rem;margin:14px 0 6px}
 .notes h4:first-child{margin-top:0}
 .notes ul{padding-right:20px;padding-inline-start:20px;display:flex;flex-direction:column;gap:4px}
@@ -321,7 +351,8 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
     <a class="brand" href="#top" aria-label="PacketYellow"><img src="icon.svg" alt=""><b>PacketYellow</b></a>
     <ul>
       <li><a href="#tools">ابزارها</a></li>
-      <li><a href="#auto">VPN خودکار</a></li>
+      <li><a href="#vpn">کلاینت VPN</a></li>
+      <li><a href="#auto">تشخیص خودکار</a></li>
       <li><a href="#sites">فیلترینگ</a></li>
       <li><a href="#download">دانلود</a></li>
       <li><a href="#faq">سؤال‌ها</a></li>
@@ -338,7 +369,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
     <div>
       <span class="eyebrow"><i></i><span id="heroVer">PacketYellow</span> · open source</span>
       <h1>پکتات کجا رفتن؟<span>ما دقیق بهت میگیم. تا آخرین میلی‌ثانیه.</span></h1>
-      <p class="lead">پینگ زنده، ۲۶۶ بازی، تست فیلترینگ سایت‌ها، DNS و تست سرعت. VPN رو هم خودش تشخیص میده. برای اینترنت ایران ساخته شده، با هسته‌ی Rust.</p>
+      <p class="lead">پینگ زنده، ۲۶۶ بازی، تست فیلترینگ سایت‌ها، DNS و تست سرعت کم‌مصرف. حالا با کلاینت VPN روی هسته‌ی Xray، که فقط وقتی واقعاً وصلی میگه «متصل». برای اینترنت ایران ساخته شده، با هسته‌ی Rust.</p>
       <div class="cta">
         <a class="btn btn-ink" id="heroDl" href="https://github.com/Mehdi138iimm/PacketYellow/releases" target="_blank" rel="noopener">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
@@ -346,7 +377,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
         </a>
         <a class="btn btn-line" href="https://github.com/Mehdi138iimm/PacketYellow" target="_blank" rel="noopener">گیت‌هاب</a>
       </div>
-      <div class="meta"><span><b>رایگان</b> برای همیشه</span><span><b>بدون</b> نیاز به ادمین</span><span>ویندوز ۱۰ و ۱۱</span></div>
+      <div class="meta"><span><b>رایگان</b> برای همیشه</span><span><b>بدون</b> ادمین (جز حالت TUN)</span><span>ویندوز ۱۰ و ۱۱</span></div>
     </div>
 
     <div class="win" aria-label="نمای داشبورد زنده‌ی برنامه" role="img">
@@ -374,9 +405,9 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
 <main>
 <section id="tools">
   <div class="wrap">
-    <span class="kicker rv">9 tools · 9 keys</span>
-    <h2 class="rv">نُه تا کلید، نُه تا جواب.</h2>
-    <p class="sub rv">توی برنامه با کلیدهای ۱ تا ۹ بین بخش‌ها می‌پری. اینجا هم همین‌طوره: یه عدد بزن.</p>
+    <span class="kicker rv">10 tools · 10 keys</span>
+    <h2 class="rv">ده تا کلید، ده تا جواب.</h2>
+    <p class="sub rv">توی برنامه با کلیدهای ۱ تا ۹ بین بخش‌ها می‌پری و ۰ هم تنظیماته. اینجا هم همین‌طوره: یه عدد بزن.</p>
 
     <div class="tools-grid">
       <ul class="tlist" role="tablist" id="tlist" aria-label="ابزارها"></ul>
@@ -391,7 +422,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
 <section class="auto" id="auto">
   <div class="wrap auto-grid">
     <div>
-      <span class="kicker rv">Auto mode · new in 0.3.2</span>
+      <span class="kicker rv">Auto mode · since 0.3.2</span>
       <h2 class="rv">VPN زدی؟ خودش می‌فهمه.</h2>
       <p class="sub rv">پشت VPN پینگ TCP دروغ میگه: یا به سرور VPN می‌خوره یا به یه آدرس جعلی. PacketYellow هر ۴ ثانیه شبکه رو نگاه می‌کنه و خودش بین TCP و HTTP جابه‌جا میشه. تو فقط بازیتو بکن.</p>
       <label class="switch rv"><input type="checkbox" id="vpnSw"><span class="sw"></span><span id="vpnSwL">VPN خاموشه</span></label>
@@ -416,6 +447,43 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
       <div class="route-out">
         <span class="mode" id="rMode">TCP</span>
         <p id="rTxt">مستقیم. زمان دست‌دادن TCP تا سرور رو می‌سنجه، دقیق‌ترین حالت ممکن.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="vpn">
+  <div class="wrap">
+    <span class="kicker rv">VPN client · Xray-core · 0.5 beta</span>
+    <h2 class="rv">دیگه «متصل» الکی نداریم.</h2>
+    <p class="sub rv">کلاینت VPN داخل خود برنامه، با همون هسته‌ای که v2rayN و پنل‌های 3x-ui و Marzban دارن. بعد از وصل شدن یه درخواست واقعی از داخل تونل می‌فرسته؛ اگه جواب نیاد، دلیل واقعیش رو میگه.</p>
+    <div class="vpn-grid">
+      <div>
+        <ul class="feats">
+          <li class="rv"><b>Xray-core</b><span>VLESS، VMess، Trojan، Shadowsocks و SOCKS با REALITY، Vision، XHTTP، WebSocket، gRPC و HTTPUpgrade. sing-box فقط برای Hysteria2، TUIC و جلوی حالت TUN.</span></li>
+          <li class="rv"><b>Real delay</b><span>مثل v2rayN و Hiddify: هر سرور از داخل هسته‌ی خودش یه درخواست واقعی می‌گیره. نتیجه‌ها زنده میان و یه کانفیگ خراب کل تست رو خراب نمی‌کنه.</span></li>
+          <li class="rv"><b>سه حالت</b><span>پروکسی سیستم، TUN (کل ترافیک ویندوز) یا فقط پورت. آدرس پروکسی بعد از اتصال با دکمه‌ی کپی نشون داده میشه.</span></li>
+          <li class="rv"><b>ضد دردسر</b><span>PAC برنامه‌های دیگه موقع اتصال برداشته و بعد برگردونده میشه، هسته‌های جامانده بسته میشن، IP سرور از TUN مستثناست و DNS دیگه گیر نمی‌کنه.</span></li>
+          <li class="rv"><b>Fragment</b><span>برای کانفیگ‌های TLS پشت CDN. کانفیگ‌های allowInsecure هم خودکار با sing-box اجرا میشن.</span></li>
+        </ul>
+        <div class="protos rv">
+          <span class="badge y">vless</span><span class="badge y">vmess</span><span class="badge y">trojan</span><span class="badge y">ss</span><span class="badge y">socks</span><span class="badge">hysteria2</span><span class="badge">tuic</span><span class="badge">sub link</span>
+        </div>
+      </div>
+      <div class="conn rv" aria-label="نمای اتصال VPN در برنامه" role="img">
+        <h3>VPN و کانفیگ‌ها <span class="beta">بتا آزمایشی</span></h3>
+        <ol class="steps" id="vSteps">
+          <li><i>1</i>بستن هسته‌های جامانده از اجرای قبلی</li>
+          <li><i>2</i>بالا اومدن Xray · NL-Reality (vless + REALITY)</li>
+          <li><i>3</i>درخواست واقعی از داخل تونل</li>
+          <li><i>4</i>متصل · IP خروجی <span class="mono" style="direction:ltr">95.217.xx.xx</span></li>
+        </ol>
+        <div class="addr"><span>آدرس پروکسی</span><b>127.0.0.1:2080</b></div>
+        <div class="modes">
+          <div class="kv"><span>پروکسی سیستم</span><b>برای مرورگر و بیشتر برنامه‌ها</b></div>
+          <div class="kv"><span>TUN</span><b>کل ویندوز · نیاز به ادمین</b></div>
+          <div class="kv"><span>فقط پورت</span><b>SOCKS5 / HTTP برای برنامه‌ی دلخواه</b></div>
+        </div>
       </div>
     </div>
   </div>
@@ -455,6 +523,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
       <div>
         <div class="rel-head" id="relHead"><span class="num">…</span></div>
         <div class="assets" id="assets"><div class="skel"></div><div class="skel"></div></div>
+        <div class="notes" id="notes" style="margin-top:22px"><div class="skel" style="height:18px;margin-bottom:10px"></div><div class="skel" style="height:18px;width:70%;margin-bottom:10px"></div><div class="skel" style="height:18px;width:85%"></div></div>
       </div>
       <div>
         <div class="vers" id="vers">
@@ -474,8 +543,11 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
     <details class="rv"><summary>ویندوز میگه «Windows protected your PC». چی کار کنم؟</summary><p>برنامه هنوز امضای دیجیتال نداره و SmartScreen برای برنامه‌های تازه این پیام رو نشون میده. روی More info و بعد Run anyway بزن. کد کامل روی گیت‌هاب هست، اگه خواستی خودت بسازش.</p></details>
     <details class="rv"><summary>چرا پینگ بازی با عدد داخل بازی فرق داره؟</summary><p>بیشتر سرورهای بازی فقط UDP ان و بدون دسترسی ادمین نمیشه مستقیم پینگشون کرد. برای همین پینگ تا دیتاسنتر منطقه‌ی سرور (بحرین، دبی، فرانکفورت و ...) سنجیده میشه که تقریباً همون عدده. Supercell، Battle.net، Riot، Minecraft و سرورهای Steam مستقیم پینگ میشن.</p></details>
     <details class="rv"><summary>با کدوم اپراتورها کار می‌کنه؟</summary><p>همه: همراه اول، ایرانسل، مخابرات، شاتل، رایتل و بقیه. IPv4 رو ترجیح میده چون IPv6 خیلی از خط‌ها ناقصه، و تست‌ها رو محدود و موازی اجرا می‌کنه که DPI اپراتور گیر نده.</p></details>
-    <details class="rv"><summary>تست سرعت چقدر حجم می‌خوره؟</summary><p>بسته به سرعتت ۱۰۰ تا چند صد مگابایت. روی اینترنت حجمی حواست باشه، دکمه‌ی توقف هر لحظه کار می‌کنه.</p></details>
-    <details class="rv"><summary>اطلاعاتم جایی فرستاده میشه؟</summary><p>نه. همه‌ی تست‌ها روی کامپیوتر خودت اجرا میشن و هیچ سروری مال PacketYellow نیست. فقط برای پیدا کردن IP و موقعیت، از سرویس‌های عمومی مثل Cloudflare و ip-api سؤال می‌کنه.</p></details>
+    <details class="rv"><summary>تست سرعت چقدر حجم می‌خوره؟</summary><p>از نسخه‌ی 0.4.3 تست سرعت سقف حجم داره: پیش‌فرض کلاً ۱۰ مگابایت، و کنار دکمه‌ی شروع می‌تونی ۳ یا ۲۵ مگ هم انتخاب کنی. دکمه‌ی توقف هم هر لحظه کار می‌کنه.</p></details>
+    <details class="rv"><summary>VPN وصل نمیشه. چی کار کنم؟</summary><p>بخش VPN هنوز بتاست. اولین بار دکمه‌ی «دانلود هسته‌ها» رو بزن تا Xray و sing-box از گیت‌هاب رسمی خودشون گرفته بشن. برنامه فقط وقتی «متصل» میگه که یه درخواست واقعی از تونل رد بشه، پس اگه وصل نشد دلیلش (فیلتر، کلید REALITY، گواهی، DNS، پورت اشغال) رو همون‌جا می‌بینی. متن خطا رو از بخش «لاگ» کپی کن و توی Issues بفرست.</p></details>
+    <details class="rv"><summary>حالت TUN دسترسی ادمین می‌خواد؟</summary><p>آره، ساختن آداپتور TUN بدون ادمین ممکن نیست. بقیه‌ی برنامه (و حالت‌های پروکسی سیستم و فقط پورت) بدون ادمین کار می‌کنه. اگه بدون ادمین TUN رو بزنی، خود برنامه یه دکمه میده که با ادمین دوباره باز بشه؛ از تنظیمات (کلید <kbd>0</kbd>) هم میشه.</p></details>
+    <details class="rv"><summary>بعد از بستن VPN اینترنتم قطع شده!</summary><p>احتمالاً یه پروکسی جامانده روی ویندوز مونده. برو تنظیمات (کلید <kbd>0</kbd>) و «اینترنتم قطع شده» رو بزن؛ پروکسی ویندوز خاموش میشه. «بستن هسته‌های جامانده» هم xray یا sing-box باز مونده رو می‌بنده.</p></details>
+    <details class="rv"><summary>اطلاعاتم جایی فرستاده میشه؟</summary><p>نه. همه‌ی تست‌ها روی کامپیوتر خودت اجرا میشن و هیچ سروری مال PacketYellow نیست. فقط برای پیدا کردن IP و موقعیت، از سرویس‌های عمومی مثل Cloudflare و ip-api سؤال می‌کنه. کانفیگ‌ها و ساب‌هات هم فقط روی سیستم خودت ذخیره میشن و از تنظیمات می‌تونی ازشون فایل پشتیبان JSON بگیری.</p></details>
     <details class="rv"><summary>باگ پیدا کردم.</summary><p>تو برنامه برو بخش «لاگ» (کلید <kbd>9</kbd>)، «کپی همه» رو بزن و توی <a href="https://github.com/Mehdi138iimm/PacketYellow/issues" target="_blank" rel="noopener">Issues گیت‌هاب</a> بفرست.</p></details>
   </div>
 </section>
@@ -492,7 +564,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
       <a href="https://github.com/Mehdi138iimm/PacketYellow" target="_blank" rel="noopener">گیت‌هاب</a>
       <a href="https://github.com/Mehdi138iimm/PacketYellow/releases" target="_blank" rel="noopener">همه‌ی نسخه‌ها</a>
       <a href="https://github.com/Mehdi138iimm/PacketYellow/issues" target="_blank" rel="noopener">گزارش باگ</a>
-      <span class="r mono">Tauri 2 · Rust</span>
+      <span class="r mono">Tauri 2 · Rust · Xray-core</span>
     </div>
   </div>
 </footer>
@@ -500,6 +572,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
 <script>
 const REPO = 'Mehdi138iimm/PacketYellow';
 const REPO_URL = 'https://github.com/' + REPO;
+let LATEST = '';  // filled from the latest GitHub release
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const q = ms => ms == null ? 'bad' : ms < 60 ? 'good' : ms < 120 ? 'warn' : 'bad';
@@ -544,8 +617,6 @@ function tickMock() {
 for (let i = 0; i < 30; i++) S.push(nextPing());
 tickMock(); if (!reduce) setInterval(tickMock, 1000);
 
-/* ---------- marquee of games ---------- */
-const GAMES = [['Valorant', 'Bahrain', 38], ['Counter-Strike 2', 'Dubai', 52], ['PUBG Mobile', 'Bahrain', 61], ['Fortnite', 'Bahrain', 44], ['EA FC 25', 'Frankfurt', 83], ['Clash Royale', 'Supercell', 49], ['League of Legends', 'Istanbul', 74], ['Dota 2', 'Dubai', 57], ['Call of Duty: Warzone', 'Dubai', 66], ['Apex Legends', 'Bahrain', 55], ['Minecraft', 'Hypixel', 142], ['Rocket League', 'Bahrain', 47], ['Overwatch 2', 'Frankfurt', 91], ['Brawl Stars', 'Supercell', 51], ['Rainbow Six Siege', 'UAE', 49], ['Genshin Impact', 'Europe', 118]];
 
 /* ---------- 1..9 tools ---------- */
 const bar = (w, c) => `<div class="meter"><span style="width:${Math.min(100, w)}%;background:var(--${c})"></span></div>`;
@@ -559,16 +630,19 @@ const TOOLS = [
   { n: 'تست سایت‌ها', d: 'باز، فیلتر DNS، فیلتر SNI، تحریم یا قطعی', b: () => `
     <table><thead><tr><th>سایت</th><th>وضعیت</th><th>پینگ</th><th>پاسخ</th></tr></thead><tbody>
     ${[['google.com', 'ok', 'باز', 52, 310], ['youtube.com', 'no', 'فیلتر (SNI/TLS)', 58, null], ['instagram.com', 'no', 'فیلتر (DNS)', null, null], ['developer.android.com', 'slow', 'تحریم / محدود', 61, 420], ['digikala.com', 'ok', 'باز', 9, 180], ['chatgpt.com', 'slow', 'تحریم / محدود', 47, 390]].map(([s, c, t, p, h]) => `<tr><td class="mono">${s}</td><td><span class="tag ${c}">${t}</span></td><td class="num">${p == null ? '--' : p}${p ? ' ms' : ''}</td><td class="num">${h == null ? '--' : h}${h ? ' ms' : ''}</td></tr>`).join('')}</tbody></table>` },
-  { n: 'پینگ بازی‌ها', d: '۲۶۶ بازی، بهترین منطقه ستاره می‌گیره', b: () => `
+  { n: 'پینگ بازی‌ها', d: '۲۶۶ بازی، بازی دلخواه و پایش زنده', b: () => `
     <table><thead><tr><th>بازی / منطقه</th><th>پینگ</th><th></th><th>لاس</th></tr></thead><tbody>
-    ${[['Valorant', 'Bahrain', 38, 1], ['Valorant', 'Istanbul', 71, 0], ['PUBG Mobile', 'Middle East', 61, 1], ['Counter-Strike 2', 'Steam · Dubai', 52, 1], ['EA Sports FC 25', 'Frankfurt', 83, 1], ['Fortnite', 'NA-East', 188, 1]].map(([g, r, p, s], i) => `<tr class="${i === 0 ? 'best' : ''}"><td>${g}${s && i < 5 && [0, 2, 3, 4].includes(i) ? ' <span class="star">★</span>' : ''}<br><small class="mono" style="color:var(--t3)">${r}</small></td><td class="num ${q(p)}">${p} ms</td><td>${bar(p / 2, q(p))}</td><td class="num">0%</td></tr>`).join('')}</tbody></table>` },
-  { n: 'تست سرعت', d: 'چند اتصال همزمان، با تاخیر زیر بار', b: () => `
+    ${[['Valorant', 'Bahrain', 38, 1], ['Valorant', 'Istanbul', 71, 0], ['PUBG Mobile', 'Middle East', 61, 1], ['Counter-Strike 2', 'Steam · Dubai', 52, 1], ['EA Sports FC 25', 'Frankfurt', 83, 1], ['Fortnite', 'NA-East', 188, 1]].map(([g, r, p, s], i) => `<tr class="${i === 0 ? 'best' : ''}"><td>${g}${s && i < 5 && [0, 2, 3, 4].includes(i) ? ' <span class="star">★</span>' : ''}<br><small class="mono" style="color:var(--t3)">${r}</small></td><td class="num ${q(p)}">${p} ms</td><td>${bar(p / 2, q(p))}</td><td class="num">0%</td></tr>`).join('')}</tbody></table>
+    <p class="note">بازی خودت رو با چند سرور اضافه کن (ICMP بدون ادمین، TCP، Steam A2S یا SA-MP) و همه رو همزمان با نمودار، جیتر و لاس پایش کن.</p>` },
+  { n: 'تست سرعت', d: 'کم‌مصرف با سقف حجم، با تاخیر زیر بار', b: () => `
     <div class="speed2"><div><label>دانلود</label><span class="num">87.4</span> <small>Mbps</small></div><div><label>آپلود</label><span class="num">21.9</span> <small>Mbps</small></div></div>
-    <div style="margin-top:14px">${[['تاخیر بی‌بار', '24 ms'], ['تاخیر زیر بار', '61 ms'], ['بافربلوت', '<span class="badge g">B · خوب</span>'], ['دیتاسنتر', 'FRA']].map(([k, v]) => `<div class="kv"><span>${k}</span><b class="mono">${v}</b></div>`).join('')}</div>` },
-  { n: 'سرورهای تونل', d: 'vless، vmess، trojan، ss، hy2؛ مرتب از بهترین', b: () => `
-    <table><thead><tr><th>سرور</th><th>پروتکل</th><th>پینگ</th><th>لاس</th></tr></thead><tbody>
-    ${[['DE-Hetzner', 'vless', 71, 0], ['NL-Reality', 'vless', 84, 0], ['TR-IST', 'trojan', 96, 0], ['FI-hy2', 'hysteria2', 118, 2], ['US-CDN', 'vmess', 204, 5]].map(([a, b, p, l]) => `<tr><td class="mono">${a}</td><td><span class="badge">${b}</span></td><td class="num ${q(p)}">${p} ms</td><td class="num ${l > 1 ? 'warn' : ''}">${l}%</td></tr>`).join('')}</tbody></table>
-    <p class="note">لینک‌ها یا ساب‌اسکریپشن رو پیست کن؛ هر خط یه سرور.</p>` },
+    <div style="margin-top:14px">${[['تاخیر بی‌بار', '24 ms'], ['تاخیر زیر بار', '61 ms'], ['بافربلوت', '<span class="badge g">B · خوب</span>'], ['دیتاسنتر', 'FRA'], ['حجم مصرفی', '10 MB <span class="badge">۳ / ۱۰ / ۲۵ مگ</span>']].map(([k, v]) => `<div class="kv"><span>${k}</span><b class="mono">${v}</b></div>`).join('')}</div>` },
+  { n: 'VPN و کانفیگ‌ها', d: 'Xray-core، تست تاخیر واقعی، پروکسی / TUN / پورت · بتا', b: () => `
+    <table><thead><tr><th>سرور</th><th>پروتکل</th><th>Real delay</th></tr></thead><tbody>
+    ${[['NL-Reality', 'vless · reality', 212], ['DE-XHTTP', 'vless · xhttp', 268], ['TR-IST', 'trojan · ws', 341], ['FI-hy2', 'hysteria2', 389], ['US-CDN', 'vmess · grpc', null]].map(([a, b, p]) => `<tr><td class="mono">${a}</td><td><span class="badge">${b}</span></td><td>${p == null ? '<span class="tag no">کانفیگ نامعتبر</span>' : `<span class="num ${p < 300 ? 'good' : 'warn'}">${p} ms</span>`}</td></tr>`).join('')}</tbody></table>
+    <div class="kv" style="margin-top:12px"><span>وضعیت</span><b><span class="badge g">متصل · تست واقعی از داخل تونل رد شد</span></b></div>
+    <div class="kv"><span>آدرس پروکسی</span><b class="mono">127.0.0.1:2080</b></div>
+    <p class="note">لینک یا ساب رو پیست کن، «وصل به سریع‌ترین» رو بزن. این بخش هنوز آزمایشیه.</p>` },
   { n: 'تست DNS', d: 'سریع‌ترین DNS و اینکه جواب واقعی میده یا فیلتر', b: () => `
     <table><thead><tr><th>DNS</th><th>میانه</th><th></th><th>پاسخ</th></tr></thead><tbody>
     ${[['Shecan', '178.22.122.100', 11, 1], ['سیستم', '192.168.1.1', 14, 0], ['Cloudflare', '1.1.1.1', 42, 1], ['Google', '8.8.8.8', 48, 1], ['Quad9', '9.9.9.9', 96, 1]].map(([a, b, p, r], i) => `<tr class="${i === 0 ? 'best' : ''}"><td>${a}<br><small class="mono" style="color:var(--t3)">${b}</small></td><td class="num ${q(p)}">${p} ms</td><td>${bar(p, 'y')}</td><td><span class="tag ${r ? 'ok' : 'no'}">${r ? 'واقعی' : 'فیلترشده'}</span></td></tr>`).join('')}</tbody></table>` },
@@ -582,15 +656,18 @@ const TOOLS = [
       <div><b>تاخیر زیر بار</b><span>پینگ وقتی خط پره. اگه خیلی بالا بره، مودمت لگ می‌سازه.</span></div>
     </div>` },
   { n: 'لاگ', d: 'هر خطا با ساعت دقیق، آماده‌ی گزارش باگ', b: () => `
-    ${[['03:12:04.118', 'info', 'app', 'PacketYellow v0.3.2 شروع شد · windows x86_64'], ['03:12:05.902', 'info', 'ui', 'تشخیص خودکار VPN: روشن → حالت HTTP'], ['03:12:09.311', 'warn', 'netinfo', 'IP خروجی متفاوت دیده شد (Split tunnel؟)'], ['03:13:40.027', 'error', 'speed', 'درخواست 25MB رد شد؛ تلاش با 10MB'], ['03:13:52.640', 'info', 'speed', 'دانلود 87.4 Mbps · آپلود 21.9 Mbps']].map(([t, l, s, m]) => `<div class="lrow ${l[0]}"><span class="lt mono">${t}</span><span class="ll">${{ info: 'اطلاعات', warn: 'هشدار', error: 'خطا' }[l]}</span><span>${m}</span></div>`).join('')}` },
+    ${[['03:12:04.118', 'info', 'app', `PacketYellow ${LATEST || 'v0.5'} شروع شد · windows x86_64`], ['03:12:04.530', 'warn', 'vpn', 'هسته‌ی جامانده (xray.exe) بسته شد'], ['03:12:09.311', 'info', 'vpn', 'PAC برنامه‌ی دیگه موقتاً برداشته شد'], ['03:12:11.027', 'error', 'vpn', 'TUN: دسترسی ادمین نیست (NEED_ADMIN)'], ['03:12:40.640', 'info', 'vpn', 'متصل · تست واقعی تونل 212ms']].map(([t, l, s, m]) => `<div class="lrow ${l[0]}"><span class="lt mono">${t}</span><span class="ll">${{ info: 'اطلاعات', warn: 'هشدار', error: 'خطا' }[l]}</span><span>${m}</span></div>`).join('')}` },
+  { n: 'تنظیمات', d: 'نسخه و آپدیت، ادمین، پشتیبان‌گیری و ابزار نجات', b: () => `
+    ${[['نسخه‌ی برنامه', `<span class="mono">${esc((LATEST || 'v0.5').replace(/^v/, ''))}</span> <span class="badge g">آخرین نسخه</span>`], ['بررسی خودکار آپدیت', '<span class="badge g">روشن</span>'], ['صفحه‌ی شروع', 'داشبورد زنده · خودکار'], ['دسترسی ادمین', '<span class="badge r">نه</span> · باز کردن دوباره با ادمین'], ['هسته‌ها', '<span class="mono">Xray · sing-box</span> <span class="badge g">نصب شده</span>'], ['پشتیبان‌گیری', 'کانفیگ‌ها، ساب‌ها، سایت‌ها و بازی‌ها · JSON']].map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('')}
+    <p class="note">«اینترنتم قطع شده» پروکسی جامانده‌ی ویندوز رو خاموش می‌کنه؛ «بستن هسته‌های جامانده» هم xray و sing-box باز مونده رو می‌بنده.</p>` },
 ];
 let tCur = 0, tAuto = !reduce, tTimer = 0;
-$('tlist').innerHTML = TOOLS.map((t, i) => `<li role="presentation"><button role="tab" id="tt${i}" aria-selected="false" data-i="${i}"><kbd>${i + 1}</kbd><span><b>${t.n}</b><small>${t.d}</small></span></button></li>`).join('');
+$('tlist').innerHTML = TOOLS.map((t, i) => `<li role="presentation"><button role="tab" id="tt${i}" aria-selected="false" data-i="${i}"><kbd>${(i + 1) % 10}</kbd><span><b>${t.n}</b><small>${t.d}</small></span></button></li>`).join('');
 function showTool(i, user) {
   tCur = (i + TOOLS.length) % TOOLS.length;
   if (user) tAuto = false;
   document.querySelectorAll('#tlist button').forEach((b, k) => b.setAttribute('aria-selected', k === tCur));
-  $('stKey').textContent = tCur + 1; $('stName').textContent = TOOLS[tCur].n;
+  $('stKey').textContent = (tCur + 1) % 10; $('stName').textContent = TOOLS[tCur].n;
   const body = $('stBody'); body.innerHTML = TOOLS[tCur].b(); body.style.animation = 'none'; void body.offsetWidth; body.style.animation = '';
   const p = $('stProg'); p.classList.remove('run'); void p.offsetWidth;
   clearTimeout(tTimer);
@@ -604,7 +681,7 @@ $('tlist').addEventListener('keydown', e => {
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.altKey || e.metaKey || e.target.matches('input,textarea')) return;
   const k = e.key.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); const i = +k;
-  if (i >= 1 && i <= 9) { showTool(i - 1, true); const r = $('tools').getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) $('tools').scrollIntoView(); }
+  if (k.length === 1 && i >= 0 && i <= 9 && TOOLS[(i + 9) % 10]) { showTool((i + 9) % 10, true); const r = $('tools').getBoundingClientRect(); if (r.bottom < 0 || r.top > innerHeight) $('tools').scrollIntoView(); }
 });
 // only auto-cycle while the section is on screen
 if ('IntersectionObserver' in window) new IntersectionObserver(([en]) => { if (!tAuto) return; if (en.isIntersecting) showTool(tCur); else clearTimeout(tTimer); }, { threshold: .3 }).observe($('stage'));
@@ -689,6 +766,7 @@ function noRelease(msg) {
   $('relHead').innerHTML = '<span class="num">' + KNOWN[0] + '</span>';
   $('assets').innerHTML = `<div class="dl-empty"><b>${msg}</b>فایل‌ها رو مستقیم از صفحه‌ی ریلیزهای گیت‌هاب بگیر.<div style="margin-top:14px"><a class="btn btn-y" href="${REPO_URL}/releases" target="_blank" rel="noopener">صفحه‌ی ریلیزها</a></div></div>`;
   $('verList').innerHTML = `<div class="vers">${KNOWN.map(t => verRow(t, REPO_URL + '/releases', 'گیت‌هاب')).join('')}</div>`;
+  $('notes').innerHTML = `<p>یادداشت‌های نسخه مستقیم از گیت‌هاب خونده میشن و الان در دسترس نیستن.</p><p style="margin-top:10px"><a href="${REPO_URL}/releases" target="_blank" rel="noopener">دیدن همه‌ی نسخه‌ها روی گیت‌هاب</a></p>`;
 }
 async function gh() {
   fetch('https://api.github.com/repos/' + REPO).then(r => r.ok ? r.json() : null).then(j => { $('stars').textContent = j ? fa(j.stargazers_count) : '★'; }).catch(() => { $('stars').textContent = '★'; });
@@ -702,8 +780,9 @@ async function gh() {
   const rel = list[0];
   const tag = rel.tag_name || rel.name || '';
   const total = (rel.assets || []).reduce((a, x) => a + (x.download_count || 0), 0);
-  $('relHead').innerHTML = `<span class="num">${esc(tag)}</span><span>${esc(fdate(rel.published_at))}${total ? ` · ${fa(total)} دانلود` : ''}</span>`;
-  $('heroDlVer').textContent = tag;
+  $('relHead').innerHTML = `<span class="num">${esc(tag)}</span>${rel.prerelease ? '<span class="beta">بتا · pre-release</span>' : ''}<span>${esc(fdate(rel.published_at))}${total ? ` · ${fa(total)} دانلود` : ''}</span>`;
+  $('heroDlVer').textContent = tag; LATEST = tag;
+  if (tCur >= 8) showTool(tCur);
   const rank = n => /\.exe$/i.test(n) ? 0 : /\.msi$/i.test(n) ? 1 : 2;
   const assets = (rel.assets || []).filter(a => !/\.(sig|blockmap|json)$/i.test(a.name)).sort((a, b) => rank(a.name) - rank(b.name));
   if (!assets.length) { $('assets').innerHTML = `<a class="asset" href="${esc(rel.html_url)}" target="_blank" rel="noopener"><span class="ic">${dlIcon}</span><span><b>${esc(tag)}</b><small>فایل‌ها رو تو صفحه‌ی ریلیز ببین</small></span></a>`; }
@@ -711,6 +790,8 @@ async function gh() {
     $('assets').innerHTML = assets.map((a, i) => `<a class="asset${i === 0 ? ' rec' : ''}" href="${esc(a.browser_download_url)}" target="_blank" rel="noopener"><span class="ic">${dlIcon}</span><span><b>${esc(a.name)}</b><small>${fmtSize(a.size)} · ${fa(a.download_count || 0)} دانلود${i === 0 ? ' · پیشنهادی' : ''}</small></span><span class="mono" style="color:var(--t3);font-size:.8rem">${/\.msi$/i.test(a.name) ? 'MSI' : /\.exe$/i.test(a.name) ? 'EXE' : ''}</span></a>`).join('');
   }
   $('verList').innerHTML = `<div class="vers">${list.map(x => verRow(x.tag_name || x.name, x.html_url, esc(fdate(x.published_at)), x.prerelease)).join('')}</div>`;
+  $('notes').innerHTML = (rel.body ? mdLite(rel.body.replace(/^>.*$/gm, '')) : '<p>برای این نسخه یادداشتی نوشته نشده.</p>')
+    + '<p class="note">بعد از نصب، اولین بار از بخش VPN «دانلود هسته‌ها» رو بزن. برای حالت TUN برنامه رو با Run as administrator باز کن.</p>';
 }
 gh();
 
