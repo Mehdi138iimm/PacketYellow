@@ -17,6 +17,21 @@ pub fn client(timeout: Duration) -> Result<reqwest::Client, String> {
         .map_err(|e| e.to_string())
 }
 
+/// Same as `client` but never follows redirects: used by the live monitor, which sends one request per
+/// second for as long as the dashboard is open. Following a redirect chain every second (e.g. site.com ->
+/// www.site.com -> /fa/) multiplied the traffic for no benefit; the first response is enough to time a round trip.
+pub fn client_no_redirect(timeout: Duration) -> Result<reqwest::Client, String> {
+    reqwest::Client::builder()
+        .user_agent(UA)
+        .timeout(timeout)
+        .connect_timeout(timeout.min(Duration::from_secs(6)))
+        .tcp_nodelay(true)
+        .pool_idle_timeout(Duration::from_secs(90))
+        .redirect(reqwest::redirect::Policy::none())
+        .build()
+        .map_err(|e| e.to_string())
+}
+
 /// One HEAD request on a kept-alive connection = one real round trip, even through a VPN/proxy.
 pub async fn http_once(client: &reqwest::Client, url: &str) -> Option<f64> {
     http_try(client, url).await.ok()

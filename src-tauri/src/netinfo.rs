@@ -526,9 +526,16 @@ fn merge(into: &mut Geo, g: Geo) {
 
 /// Query every provider in parallel, keep answers that agree with the majority IP, merge by priority.
 async fn geo_all(client: &reqwest::Client, ip: Option<String>) -> Geo {
-    const ORDER: [&str; 6] = ["ip-api", "ipwho.is", "ipinfo", "ipapi.co", "ifconfig.co", "ipify"];
-    let res: Vec<Option<Geo>> = join_all(ORDER.iter().map(|w| provider(client.clone(), *w, ip.clone()))).await;
-    let got: Vec<Geo> = res.into_iter().flatten().collect();
+    // Tiered to save data: the two richest providers first, the other four only if both of those fail.
+    // (Used to hit all six on every refresh / network change.)
+    const FIRST: [&str; 2] = ["ip-api", "ipwho.is"];
+    const BACKUP: [&str; 4] = ["ipinfo", "ipapi.co", "ifconfig.co", "ipify"];
+    let res: Vec<Option<Geo>> = join_all(FIRST.iter().map(|w| provider(client.clone(), *w, ip.clone()))).await;
+    let mut got: Vec<Geo> = res.into_iter().flatten().collect();
+    if got.is_empty() {
+        let res: Vec<Option<Geo>> = join_all(BACKUP.iter().map(|w| provider(client.clone(), *w, ip.clone()))).await;
+        got = res.into_iter().flatten().collect();
+    }
     // majority IP (providers behind different routes can disagree when split-tunnelling)
     let mut count: HashMap<String, usize> = HashMap::new();
     for g in &got {

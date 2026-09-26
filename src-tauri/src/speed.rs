@@ -1,4 +1,9 @@
-//! Speed test (Cloudflare): multi-connection, time-based, first 1.5s (TCP slow-start) discarded.
+//! Speed test (Cloudflare): multi-connection, **data-budgeted** (v0.4.3).
+//!
+//! v0.4.3: the old test was time-based (10 s download + 8 s upload at full speed), so on a 90 Mbps line it
+//! burned ~100 MB of quota per run. Now every test has a hard byte budget (default 10 MB total, 75% download /
+//! 25% upload) shared by all connections; a worker can only request bytes it has reserved from the budget,
+//! so the test can never download more than the budget. Time caps still apply for slow lines.
 //! Also measures idle latency/jitter over HTTP and "loaded latency" (bufferbloat) during download.
 //!
 //! v0.3.1 fixes:
@@ -25,16 +30,23 @@ use tokio::time::sleep;
 static CANCEL: AtomicBool = AtomicBool::new(false);
 static RUNNING: AtomicBool = AtomicBool::new(false);
 const BASE: &str = "https://speed.cloudflare.com";
-const DL_SECS: f64 = 10.0;
-const UL_SECS: f64 = 8.0;
-const WARMUP: f64 = 1.5;
+/// Hard time caps. On a slow line the budget is not reached, so the test just ends earlier with less data.
+const DL_SECS: f64 = 8.0;
+const UL_SECS: f64 = 6.0;
+/// First part of each budget is TCP slow-start and is not used for the speed number.
+const WARM_FRAC: f64 = 0.2;
 const DL_STREAMS: usize = 4;
 const UL_STREAMS: usize = 3;
-/// Download sizes to try, biggest first. The index is shared by all streams: once a size is refused,
-/// every stream moves to the next smaller one.
-const DL_SIZES: [u64; 4] = [25_000_000, 10_000_000, 5_000_000, 1_000_000];
-const UL_MIN: usize = 64 * 1024;
-const UL_MAX: usize = 4 * 1024 * 1024;
+/// Largest single download request; the server refuses huge sizes. Steps down on any non-2xx.
+const DL_CAPS: [u64; 4] = [4_000_000, 2_000_000, 1_000_000, 250_000];
+const UL_MIN: usize = 32 * 1024;
+const UL_MAX: usize = 2 * 1024 * 1024;
+/// Total data budget per test (download + upload), in MB. The UI picks one of the presets.
+const BUDGET_DEFAULT_MB: u32 = 10;
+const BUDGET_MIN_MB: u32 = 3;
+const BUDGET_MAX_MB: u32 = 50;
+/// Share of the budget used for download (rest = upload).
+const DL_SHARE: f64 = 0.75;
 const REQ_TIMEOUT: Duration = Duration::from_secs(6);
 
 #[derive(Serialize, Clone)]
@@ -141,28 +153,61 @@ async fn idle_latency(client: &reqwest::Client, app: &AppHandle) -> (Option<f64>
     (median(&mut v), jitter, colo)
 }
 
-async fn run_phase(app: &AppHandle, phase: &'static str, secs: f64, counter: &AtomicU64, loaded: Option<&Mutex<Vec<f64>>>) -> f64 {
+/// Watches a transfer phase and returns Mbps.
+/// Stops when the byte budget is used up, every worker is done, the time cap is hit, or the user cancels.
+/// Speed = bytes after the "warm point" (first ~20% of the budget = TCP slow-start) divided by the time
+/// between the warm point and the last byte that actually arrived (idle tail after the budget is not counted).
+async fn run_phase(app: &AppHandle, phase: &'static str, secs: f64, budget: u64, counter: &AtomicU64, active: &AtomicUsize, loaded: Option<&Mutex<Vec<f64>>>) -> f64 {
     let start = Instant::now();
+    let warm_bytes = (budget as f64 * WARM_FRAC) as u64;
     let mut warm: Option<(f64, u64)> = None;
+    let mut last: (f64, u64) = (0.0, 0);
+    let mut last_emit = 0.0;
     let mut result;
     loop {
-        sleep(Duration::from_millis(200)).await;
+        // fine sampling: with a small budget a fast line finishes in well under a second
+        sleep(Duration::from_millis(25)).await;
         let t = start.elapsed().as_secs_f64();
         let b = counter.load(Relaxed);
-        if warm.is_none() && t >= WARMUP {
+        if b > last.1 {
+            last = (t, b);
+        }
+        if warm.is_none() && b >= warm_bytes && t >= 0.05 {
             warm = Some((t, b));
         }
         result = match warm {
-            Some((wt, wb)) if t - wt > 0.3 => mbps(b.saturating_sub(wb) as f64, t - wt),
-            _ => mbps(b as f64, t),
+            Some((wt, wb)) if last.0 - wt > 0.05 && last.1 > wb => mbps((last.1 - wb) as f64, last.0 - wt),
+            _ => mbps(last.1 as f64, last.0),
         };
-        let lat = loaded.and_then(|m| m.lock().ok().and_then(|v| v.last().copied()));
-        emit(app, phase, result, t / secs * 100.0, lat);
-        if t >= secs || CANCEL.load(Relaxed) {
+        let finished_soon = b >= budget || (t > 0.3 && active.load(Relaxed) == 0);
+        if t - last_emit >= 0.2 || finished_soon {
+            last_emit = t;
+            let lat = loaded.and_then(|m| m.lock().ok().and_then(|v| v.last().copied()));
+            let pct = (b as f64 / budget.max(1) as f64).max(t / secs) * 100.0;
+            emit(app, phase, result, pct, lat);
+        }
+        let finished = finished_soon;
+        if finished || t >= secs || CANCEL.load(Relaxed) {
             break;
         }
     }
     result
+}
+
+/// Takes up to `want` bytes from the shared budget; 0 = budget exhausted.
+fn reserve(left: &AtomicU64, want: u64) -> u64 {
+    match left.fetch_update(Relaxed, Relaxed, |l| if l == 0 { None } else { Some(l - l.min(want)) }) {
+        Ok(prev) => prev.min(want),
+        Err(_) => 0,
+    }
+}
+
+/// Decrements the "active workers" counter when a worker task ends (also on abort).
+struct Active(Arc<AtomicUsize>);
+impl Drop for Active {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Relaxed);
+    }
 }
 
 #[tauri::command]
@@ -181,14 +226,15 @@ impl Drop for RunGuard {
 }
 
 #[tauri::command]
-pub async fn speed_test(app: AppHandle) -> Result<SpeedResult, String> {
+pub async fn speed_test(app: AppHandle, budget_mb: Option<u32>) -> Result<SpeedResult, String> {
     if RUNNING.swap(true, Relaxed) {
         return Err("یه تست سرعت دیگه هنوز در حال اجراست".into());
     }
     let _guard = RunGuard;
     CANCEL.store(false, Relaxed);
-    applog::info("speed", "شروع تست سرعت");
-    let r = speed_inner(&app).await;
+    let budget_mb = budget_mb.unwrap_or(BUDGET_DEFAULT_MB).clamp(BUDGET_MIN_MB, BUDGET_MAX_MB);
+    applog::info("speed", format!("شروع تست سرعت (سقف مصرف {budget_mb} MB)"));
+    let r = speed_inner(&app, budget_mb).await;
     match &r {
         Ok(o) => applog::info(
             "speed",
@@ -207,7 +253,7 @@ pub async fn speed_test(app: AppHandle) -> Result<SpeedResult, String> {
     r
 }
 
-async fn speed_inner(app: &AppHandle) -> Result<SpeedResult, String> {
+async fn speed_inner(app: &AppHandle, budget_mb: u32) -> Result<SpeedResult, String> {
     let client = reqwest::Client::builder()
         .user_agent(crate::probe::UA)
         .connect_timeout(Duration::from_secs(8))
@@ -224,30 +270,43 @@ async fn speed_inner(app: &AppHandle) -> Result<SpeedResult, String> {
     }
     let mut out = SpeedResult { download_mbps: 0.0, upload_mbps: 0.0, latency_ms, jitter_ms, loaded_latency_ms: None, colo, data_mb: 0.0, cancelled: false, warnings: vec![] };
 
-    // ---- download: 4 parallel connections ----
+    let total = budget_mb as u64 * 1_000_000;
+    let dl_budget = (total as f64 * DL_SHARE) as u64;
+    let ul_budget = total - dl_budget;
+
+    // ---- download: 4 parallel connections sharing one byte budget ----
     let dl = Arc::new(AtomicU64::new(0));
-    let size_idx = Arc::new(AtomicUsize::new(0));
-    let stop = Arc::new(AtomicBool::new(false));
     let loaded = Arc::new(Mutex::new(Vec::<f64>::new()));
     let mut handles: Vec<JoinHandle<()>> = Vec::new();
     if !CANCEL.load(Relaxed) {
+        let left = Arc::new(AtomicU64::new(dl_budget));
+        let cap_idx = Arc::new(AtomicUsize::new(0));
+        let stop = Arc::new(AtomicBool::new(false));
+        let active = Arc::new(AtomicUsize::new(DL_STREAMS));
+        // ~2 requests per stream: enough to get past slow-start without wasting bytes on overhead
+        let per_req = (dl_budget / (DL_STREAMS as u64 * 2)).max(100_000);
         for _ in 0..DL_STREAMS {
-            let (c, n, s, idx, w) = (client.clone(), dl.clone(), stop.clone(), size_idx.clone(), warns.clone());
+            let (c, n, s, idx, w, left, act) = (client.clone(), dl.clone(), stop.clone(), cap_idx.clone(), warns.clone(), left.clone(), active.clone());
             handles.push(spawn(async move {
+                let _a = Active(act);
                 while !s.load(Relaxed) {
-                    let i = idx.load(Relaxed).min(DL_SIZES.len() - 1);
-                    let size = DL_SIZES[i];
-                    let resp = match c.get(format!("{BASE}/__down?bytes={size}")).send().await {
+                    let i = idx.load(Relaxed).min(DL_CAPS.len() - 1);
+                    let size = reserve(&left, per_req.min(DL_CAPS[i]));
+                    if size == 0 {
+                        break; // budget used up
+                    }
+                    let resp = match c.get(format!("{BASE}/__down?bytes={size}")).timeout(Duration::from_secs(12)).send().await {
                         Ok(r) if r.status().is_success() => r,
                         Ok(r) => {
-                            w.warn(format!("دانلود {} MB رد شد: HTTP {}", size / 1_000_000, r.status()));
-                            // step down to a smaller request size (only once per failed size)
-                            let _ = idx.compare_exchange(i, (i + 1).min(DL_SIZES.len() - 1), Relaxed, Relaxed);
+                            w.warn(format!("دانلود {} KB رد شد: HTTP {}", size / 1000, r.status()));
+                            left.fetch_add(size, Relaxed); // nothing downloaded: give the bytes back
+                            let _ = idx.compare_exchange(i, (i + 1).min(DL_CAPS.len() - 1), Relaxed, Relaxed);
                             sleep(Duration::from_millis(200)).await;
                             continue;
                         }
                         Err(e) => {
                             w.warn(format!("خطای اتصال دانلود: {}", err_chain(&e)));
+                            left.fetch_add(size, Relaxed);
                             sleep(Duration::from_millis(300)).await;
                             continue;
                         }
@@ -270,23 +329,23 @@ async fn speed_inner(app: &AppHandle) -> Result<SpeedResult, String> {
                 }
             }));
         }
-        // loaded-latency probe on its own connection
+        // loaded-latency probe on its own connection (0-byte requests)
         {
             let (c, s, l) = (client.clone(), stop.clone(), loaded.clone());
             handles.push(spawn(async move {
                 let url = format!("{BASE}/__down?bytes=0");
-                sleep(Duration::from_millis(1000)).await;
+                sleep(Duration::from_millis(250)).await;
                 while !s.load(Relaxed) {
                     if let Ok((ms, _)) = tiny_get(&c, &url).await {
                         if let Ok(mut v) = l.lock() {
                             v.push(ms);
                         }
                     }
-                    sleep(Duration::from_millis(400)).await;
+                    sleep(Duration::from_millis(250)).await;
                 }
             }));
         }
-        out.download_mbps = run_phase(app, "download", DL_SECS, &dl, Some(&loaded)).await;
+        out.download_mbps = run_phase(app, "download", DL_SECS, dl_budget, &dl, &active, Some(&loaded)).await;
         stop.store(true, Relaxed);
         for h in handles.drain(..) {
             h.abort();
@@ -299,46 +358,55 @@ async fn speed_inner(app: &AppHandle) -> Result<SpeedResult, String> {
         applog::info("speed", format!("دانلود تمام شد: {:.1} Mbps ({:.1} MB)", out.download_mbps, dl.load(Relaxed) as f64 / 1e6));
     }
 
-    // ---- upload: 3 connections, adaptive chunk size, only completed bytes count ----
+    // ---- upload: 3 connections sharing one byte budget, only completed bytes count ----
     let ul = Arc::new(AtomicU64::new(0));
     if !CANCEL.load(Relaxed) {
         emit(app, "upload", 0.0, 0.0, None);
+        let left = Arc::new(AtomicU64::new(ul_budget));
         let stop = Arc::new(AtomicBool::new(false));
-        let payload = random_bytes(UL_MAX);
+        let active = Arc::new(AtomicUsize::new(UL_STREAMS));
+        let chunk = ((ul_budget / (UL_STREAMS as u64 * 2)) as usize).clamp(UL_MIN, UL_MAX);
+        let payload = random_bytes(chunk);
         for _ in 0..UL_STREAMS {
-            let (c, n, s, p, w) = (client.clone(), ul.clone(), stop.clone(), payload.clone(), warns.clone());
+            let (c, n, s, p, w, left, act) = (client.clone(), ul.clone(), stop.clone(), payload.clone(), warns.clone(), left.clone(), active.clone());
             handles.push(spawn(async move {
-                let mut size: usize = 128 * 1024;
+                let _a = Active(act);
+                let mut fails = 0;
                 while !s.load(Relaxed) {
-                    let t = Instant::now();
-                    match c.post(format!("{BASE}/__up")).timeout(Duration::from_secs(15)).body(p.slice(0..size)).send().await {
+                    let size = reserve(&left, chunk as u64) as usize;
+                    if size == 0 {
+                        break;
+                    }
+                    let ok = match c.post(format!("{BASE}/__up")).timeout(Duration::from_secs(12)).body(p.slice(0..size)).send().await {
                         Ok(r) => {
                             let status = r.status();
                             let _ = r.bytes().await;
                             if status.is_success() {
                                 n.fetch_add(size as u64, Relaxed);
-                                let el = t.elapsed();
-                                if el < Duration::from_millis(250) {
-                                    size = (size * 2).min(UL_MAX);
-                                } else if el > Duration::from_millis(1000) {
-                                    size = (size / 2).max(UL_MIN);
-                                }
+                                true
                             } else {
                                 w.warn(format!("آپلود رد شد: HTTP {status}"));
-                                size = (size / 2).max(UL_MIN);
-                                sleep(Duration::from_millis(300)).await;
+                                false
                             }
                         }
                         Err(e) => {
                             w.warn(format!("خطای آپلود: {}", err_chain(&e)));
-                            size = (size / 2).max(UL_MIN);
-                            sleep(Duration::from_millis(300)).await;
+                            false
                         }
+                    };
+                    if !ok {
+                        // a refused upload may already have used some quota: don't hand the bytes back
+                        // endlessly, give up on this stream after a few failures
+                        fails += 1;
+                        if fails >= 3 {
+                            break;
+                        }
+                        sleep(Duration::from_millis(300)).await;
                     }
                 }
             }));
         }
-        out.upload_mbps = run_phase(app, "upload", UL_SECS, &ul, None).await;
+        out.upload_mbps = run_phase(app, "upload", UL_SECS, ul_budget, &ul, &active, None).await;
         stop.store(true, Relaxed);
         for h in handles.drain(..) {
             h.abort();

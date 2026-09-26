@@ -69,7 +69,7 @@ pub async fn start_monitor(
 
     let task = if mode.as_deref() == Some("http") {
         let url = url.filter(|u| !u.is_empty()).ok_or_else(|| "برای حالت HTTP آدرس لازمه".to_string())?;
-        let client = probe::client(Duration::from_secs(3))?;
+        let client = probe::client_no_redirect(Duration::from_secs(3))?;
         applog::info("monitor", format!("شروع پایش HTTP: {url}"));
         tauri::async_runtime::spawn(async move {
             let mut flip = Flip::new(format!("HTTP {url}"));

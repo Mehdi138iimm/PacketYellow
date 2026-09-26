@@ -26,7 +26,7 @@
     <button aria-label="کوچک کردن" data-win="minimize"><i data-lucide="minus" width="15" height="15"></i></button>
     <button aria-label="بستن" class="x" data-win="close"><i data-lucide="x" width="15" height="15"></i></button>
   </div>
-  <div class="logo" data-tauri-drag-region><img src="icon.svg" alt="PacketYellow" class="logo-icon" style="width:26px;height:26px;"><b>Packet<span>Yellow</span></b></div>
+  <div class="logo" data-tauri-drag-region><img src="icon.svg" alt="PacketYellow" class="logo-icon" style="width:26px;height:26px;"><b>Packet<span>Yellow</span></b><span class="ver num" id="tVer" title="نسخه‌ی برنامه">v…</span></div>
   <div class="pills" data-tauri-drag-region>
     <span class="pill"><span class="sdot" id="hdot"></span><span id="hstat">در حال اتصال</span></span>
     <span class="pill"><i data-lucide="building-2" width="14" height="14"></i><span id="hisp">...</span></span>
@@ -44,12 +44,13 @@
     <button class="nb" role="tab" data-tab="games"><i data-lucide="gamepad-2" width="17" height="17"></i>پینگ بازی‌ها<span class="k">3</span></button>
     <button class="nb" role="tab" data-tab="speed"><i data-lucide="gauge" width="17" height="17"></i>تست سرعت<span class="k">4</span></button>
     <span class="sec">اتصال</span>
-    <button class="nb" role="tab" data-tab="tunnel"><i data-lucide="waypoints" width="17" height="17"></i>سرورهای تونل<span class="k">5</span></button>
+    <button class="nb" role="tab" data-tab="tunnel"><i data-lucide="shield" width="17" height="17"></i>VPN و کانفیگ‌ها<span class="beta" title="این بخش هنوز آزمایشیه و داریم کاملش می‌کنیم">بتا آزمایشی</span><span class="vdot" id="vSideDot" hidden></span><span class="k">5</span></button>
     <button class="nb" role="tab" data-tab="dns"><i data-lucide="search-code" width="17" height="17"></i>تست DNS<span class="k">6</span></button>
     <button class="nb" role="tab" data-tab="net"><i data-lucide="network" width="17" height="17"></i>اطلاعات شبکه<span class="k">7</span></button>
     <span class="sec">کمک</span>
     <button class="nb" role="tab" data-tab="guide"><i data-lucide="book-open" width="17" height="17"></i>راهنما<span class="k">8</span></button>
     <button class="nb" role="tab" data-tab="logs"><i data-lucide="scroll-text" width="17" height="17"></i>لاگ<span class="lbadge" id="logBadge" hidden></span><span class="k">9</span></button>
+    <button class="nb" role="tab" data-tab="settings"><i data-lucide="settings" width="17" height="17"></i>تنظیمات<span class="k">0</span></button>
 
     <div class="live-mini" aria-live="polite">
       <div class="v"><span class="num" id="mPing">--</span><small>ms</small><span class="mode-tag" id="mMode">TCP</span></div>
@@ -117,20 +118,28 @@
           <div class="cats" id="gCats"></div>
           <div class="label" style="padding:4px 6px 0;margin:8px 0 6px"><span id="gCount"></span><button class="chip-btn r" id="gAll">انتخاب همه</button><button class="chip-btn" id="gNone">هیچ</button></div>
           <div class="glist" id="glist"></div>
-          <details class="gcustom"><summary>بازی / سرور دلخواه</summary>
-            <div class="field" style="margin:10px 0 0"><input class="in" id="gcName" placeholder="نام" style="font-family:inherit;direction:rtl"><input class="in" id="gcHost" placeholder="host:port"><button class="btn" id="gcAdd"><i data-lucide="plus" width="15" height="15"></i></button></div>
-          </details>
+          <button class="btn gcustom-btn" id="gcNew"><i data-lucide="plus" width="15" height="15"></i>افزودن بازی / سرور دلخواه</button>
         </div>
         <div>
+          <div class="panel glive" id="gLive" hidden>
+            <div class="glive-head">
+              <span class="ldot" id="glDot"></span><b id="glName"></b><small id="glMeta"></small>
+              <div class="seg" id="glInt" role="radiogroup" aria-label="فاصله‌ی نمونه‌ها"><button data-i="500" role="radio">۰.۵ث</button><button data-i="1000" role="radio">۱ث</button><button data-i="2000" role="radio">۲ث</button></div>
+              <button class="btn sm" id="glPause"><i data-lucide="pause" width="14" height="14"></i><span>توقف</span></button>
+              <button class="icon-btn" id="glClose" aria-label="بستن پایش زنده"><i data-lucide="x" width="16" height="16"></i></button>
+            </div>
+            <div class="chart-box"><svg class="chart glchart" id="glChart" viewBox="0 0 1000 150" preserveAspectRatio="none" role="img" aria-label="نمودار پینگ زنده"></svg><div class="chart-axis" id="glAxis"></div></div>
+            <div class="glcards" id="glCards"></div>
+          </div>
           <div class="head sub"><span class="label" id="gSum"></span><button class="btn y" id="gRun"><i data-lucide="play" width="15" height="15"></i>تست</button></div>
-          <div class="panel tight"><table><thead><tr><th>بازی / منطقه</th><th>پینگ</th><th></th><th>جیتر</th><th>لاس</th></tr></thead><tbody id="gRows"></tbody></table></div>
+          <div class="panel tight"><table><thead><tr><th>بازی / منطقه</th><th>پینگ</th><th></th><th>جیتر</th><th>لاس</th><th></th></tr></thead><tbody id="gRows"></tbody></table></div>
         </div>
       </div>
     </section>
 
     <!-- SPEED -->
     <section class="tab" id="tab-speed">
-      <div class="head"><h1>تست سرعت</h1><span class="phase" id="spPhase"></span><button class="btn y" id="spRun"><i data-lucide="play" width="15" height="15"></i>شروع تست</button><p>سرور: Cloudflare · ۴ اتصال دانلود و ۳ اتصال آپلود · ۱۰ ثانیه دانلود و ۸ ثانیه آپلود · ثانیه‌های اول (slow-start) حساب نمیشن</p></div>
+      <div class="head"><h1>تست سرعت</h1><span class="phase" id="spPhase"></span><div class="seg" id="spBudget" role="radiogroup" aria-label="سقف مصرف اینترنت" title="حداکثر حجمی که هر تست مصرف می‌کنه"><button data-b="3" role="radio">۳ MB</button><button data-b="10" role="radio">۱۰ MB</button><button data-b="25" role="radio">۲۵ MB</button></div><button class="btn y" id="spRun"><i data-lucide="play" width="15" height="15"></i>شروع تست</button><p id="spNote">سرور: Cloudflare · ۴ اتصال دانلود و ۳ اتصال آپلود · هر تست حداکثر همون حجمی رو مصرف می‌کنه که انتخاب کردی (۷۵٪ دانلود، ۲۵٪ آپلود) · سقف بیشتر = عدد دقیق‌تر روی خط‌های پرسرعت</p></div>
       <div class="speed">
         <div class="panel sp dim" id="spD"><div class="label"><i data-lucide="arrow-down" width="15" height="15"></i>دانلود</div><div class="val"><span class="num" id="spDv">0.0</span><small>Mbps</small></div><div class="track"><span id="spDt"></span></div></div>
         <div class="panel sp dim" id="spU"><div class="label"><i data-lucide="arrow-up" width="15" height="15"></i>آپلود</div><div class="val"><span class="num" id="spUv">0.0</span><small>Mbps</small></div><div class="track"><span id="spUt"></span></div></div>
@@ -147,12 +156,77 @@
       <div class="hist"><div class="label">تست‌های قبلی</div><div class="panel tight"><table><thead><tr><th>زمان</th><th>دانلود</th><th>آپلود</th><th>تاخیر</th><th>جیتر</th><th>دیتاسنتر</th></tr></thead><tbody id="spHist"></tbody></table></div></div>
     </section>
 
-    <!-- TUNNEL -->
+    <!-- VPN -->
     <section class="tab" id="tab-tunnel">
-      <div class="head"><h1>سرورهای تونل</h1><p>لینک‌های vless / vmess / trojan / ss / hysteria2 / tuic یا host:port رو هر کدوم تو یه خط بذار.</p></div>
-      <textarea class="in" id="tunIn" rows="6" spellcheck="false" placeholder="vless://uuid@host:443#name"></textarea>
-      <div class="head sub" style="margin-top:14px"><span class="label" id="tunSum"></span><button class="btn y" id="tunRun"><i data-lucide="arrow-down-wide-narrow" width="15" height="15"></i>تست و مرتب‌سازی</button></div>
-      <div class="panel tight"><table><thead><tr><th>سرور</th><th>پروتکل</th><th>پینگ</th><th>جیتر</th><th>لاس</th><th></th></tr></thead><tbody id="tunRows"></tbody></table></div>
+      <div class="head"><h1>VPN و کانفیگ‌ها</h1>
+        <span class="core-pill" id="coreInfo">هسته: ...</span>
+        <button class="btn sm" id="coreDl" hidden><i data-lucide="download" width="14" height="14"></i><span>دانلود هسته</span></button>
+        <button class="btn sm ghost" id="coreDir" title="xray.exe و sing-box.exe رو دستی اینجا بذار"><i data-lucide="folder-open" width="14" height="14"></i>پوشه‌ی هسته</button>
+        <span class="beta lg">بتا آزمایشی</span>
+        <p>مثل v2rayN و Hiddify: لینک vless / vmess / trojan / ss / hysteria2 / tuic یا لینک ساب رو اضافه کن، تست بگیر و وصل شو. هسته‌ی اصلی Xray (مثل v2rayN) و sing-box برای Hysteria2 / TUIC و حالت TUN.</p></div>
+
+      <div class="hint beta-hint"><i data-lucide="flask-conical" width="17" height="17"></i><span>بخش VPN هنوز <b>آزمایشی (بتا)</b> هست و داریم کاملش می‌کنیم. اگه وصل نشد یا کُند بود، از بخش «لاگ» متن خطا رو کپی کن و تو گیت‌هاب گزارش بده.</span><button class="btn sm" data-open="https://github.com/Mehdi138iimm/PacketYellow/issues">گزارش باگ</button></div>
+
+      <div class="vpn-top">
+        <div class="panel vconn" id="vConn" data-state="off">
+          <button class="vbtn" id="vBtn" aria-label="اتصال / قطع"><i data-lucide="power" width="34" height="34"></i></button>
+          <div class="vinfo">
+            <b id="vState">قطع</b>
+            <span id="vName">یه کانفیگ از لیست انتخاب کن</span>
+            <small id="vMeta"></small>
+          </div>
+          <div class="vstats">
+            <div class="st"><span class="num" id="vUp">--</span><span>آپلود</span></div>
+            <div class="st"><span class="num" id="vDown">--</span><span>دانلود</span></div>
+            <div class="st"><span class="num" id="vTotal">--</span><span>مصرف این اتصال</span></div>
+            <div class="st"><span class="num" id="vTime">--</span><span>مدت اتصال</span></div>
+            <div class="st"><span class="num" id="vDelay">--</span><span>تاخیر واقعی</span></div>
+            <div class="st"><span class="num" id="vIp">--</span><span>IP خروجی</span></div>
+          </div>
+        </div>
+        <div class="panel vset">
+          <div class="label">حالت اتصال</div>
+          <div class="seg" id="vMode" role="radiogroup" aria-label="حالت اتصال">
+            <button data-m="proxy" role="radio" title="پروکسی ویندوز خودکار تنظیم میشه (مرورگر، تلگرام دسکتاپ، ...)">پروکسی سیستم</button>
+            <button data-m="tun" role="radio" title="همه‌ی برنامه‌ها و بازی‌ها؛ نیاز به Run as administrator">TUN</button>
+            <button data-m="local" role="radio" title="فقط پورت SOCKS/HTTP محلی باز میشه">فقط پورت</button>
+          </div>
+          <div class="vgrid">
+            <div class="vrow"><label for="vPort">پورت محلی (SOCKS + HTTP)</label><input class="in" id="vPort" type="number" min="1024" max="65535" placeholder="خالی = خودکار (2080)"></div>
+            <div class="vrow"><label for="vDns">DNS از داخل تونل</label><input class="in" id="vDns" list="vDnsList" spellcheck="false" placeholder="خالی = 1.1.1.1 (DoH)"></div>
+            <div class="vrow"><label for="vDDns">DNS مستقیم (‎.ir و آدرس سرور)</label><input class="in" id="vDDns" list="vDDnsList" spellcheck="false" placeholder="خالی = DNS سیستم"></div>
+          </div>
+          <datalist id="vDnsList"><option value="1.1.1.1">Cloudflare (DoH)</option><option value="8.8.8.8">Google (DoH)</option><option value="9.9.9.9">Quad9 (DoH)</option><option value="https://dns.google/dns-query">Google DoH</option><option value="https://cloudflare-dns.com/dns-query">Cloudflare DoH</option><option value="tls://1.1.1.1">Cloudflare DoT</option><option value="8.8.8.8:53">Google (TCP)</option></datalist>
+          <datalist id="vDDnsList"><option value="78.157.42.100">Electro</option><option value="178.22.122.100">Shecan</option><option value="10.202.10.202">403.online</option><option value="1.1.1.1">Cloudflare</option><option value="8.8.8.8">Google</option></datalist>
+          <small class="vnow" id="vNow"></small>
+          <label class="chk"><input type="checkbox" id="vBypass">سایت‌های ‎.ir و شبکه‌ی داخلی مستقیم (بدون VPN)</label>
+          <label class="chk"><input type="checkbox" id="vQuic">بستن QUIC (یوتیوب و مرورگر تو TUN پایدارتر میشن)</label>
+          <label class="chk" title="ClientHello ی TLS تیکه‌تیکه فرستاده میشه تا فیلترینگ SNI دورش بزنه. فقط برای کانفیگ‌های Xray با TLS؛ اگه سرعت کم شد خاموشش کن"><input type="checkbox" id="vFrag">Fragment (دور زدن فیلترینگ SNI، کانفیگ‌های TLS)</label>
+          <label class="chk"><input type="checkbox" id="vLan">اتصال بقیه‌ی دستگاه‌های شبکه (گوشی و ...) به این پورت</label>
+          <button class="btn sm ghost" id="vReset"><i data-lucide="rotate-ccw" width="14" height="14"></i>برگشت به پیش‌فرض</button>
+        </div>
+      </div>
+      <div class="hint sp-err" id="vErr" hidden><i data-lucide="alert-triangle" width="17" height="17"></i><span></span><button class="btn sm y" id="vErrAdmin" hidden><i data-lucide="shield-alert" width="14" height="14"></i>باز کردن با دسترسی ادمین</button><button class="btn sm" data-goto="logs">لاگ</button></div>
+      <div class="vaddr" id="vAddr" hidden><i data-lucide="plug" width="16" height="16"></i><span>آدرس پروکسی برای برنامه‌های دیگه (تلگرام، مرورگر، بازی):</span><code class="num" id="vAddrTxt"></code><button class="btn sm ghost" id="vAddrCopy"><i data-lucide="copy" width="14" height="14"></i>کپی</button><small id="vAddrHow"></small></div>
+
+      <div class="vimport">
+        <textarea class="in" id="vIn" rows="3" spellcheck="false" placeholder="vless://...  vmess://...  trojan://...  ss://...  hysteria2://...  یا لینک ساب https://..."></textarea>
+        <div class="vimp-btns">
+          <button class="btn y" id="vAdd"><i data-lucide="plus" width="15" height="15"></i>افزودن</button>
+          <button class="btn" id="vPaste"><i data-lucide="clipboard-paste" width="15" height="15"></i>از کلیپ‌بورد</button>
+        </div>
+      </div>
+      <div class="chips vgroups" id="vGroups"></div>
+      <div class="head sub vtools"><span class="label" id="vSum"></span>
+        <button class="btn sm" id="vTcp"><i data-lucide="radar" width="14" height="14"></i>پینگ TCP</button>
+        <button class="btn sm y" id="vReal"><i data-lucide="zap" width="14" height="14"></i>تست واقعی</button>
+        <button class="btn sm" id="vBest"><i data-lucide="trophy" width="14" height="14"></i>وصل به سریع‌ترین</button>
+        <button class="btn sm" id="vSort"><i data-lucide="arrow-down-wide-narrow" width="14" height="14"></i>مرتب‌سازی</button>
+        <button class="btn sm ghost" id="vPrune">حذف بی‌پاسخ‌ها</button>
+        <button class="btn sm ghost" id="vClear">حذف همه</button>
+      </div>
+      <div class="panel tight vwrap"><table class="vtable"><thead><tr><th>#</th><th>نوع</th><th>نام</th><th>آدرس</th><th>پورت</th><th>ترنسپورت</th><th>TLS</th><th>گروه</th><th>پینگ TCP</th><th>تاخیر واقعی</th><th></th></tr></thead><tbody id="vRows"></tbody></table></div>
+      <div class="panel vdetail" id="vDetail" hidden></div>
     </section>
 
     <!-- DNS -->
@@ -213,6 +287,23 @@
         <p>سرورهای مشترک فقط یک بار پینگ میشن، پس تست ۵۰ بازی هم سریعه. سرور خاص خودت رو از «بازی / سرور دلخواه» اضافه کن.</p>
       </div></details>
 
+      <details class="gd"><summary><i data-lucide="shield" width="16" height="16"></i>VPN و کانفیگ‌ها (مثل v2rayN / Hiddify)</summary><div>
+        <p><b>هسته:</b> کانفیگ‌های VLESS / VMess / Trojan / SS با <b>Xray</b> اجرا میشن (همون هسته‌ی v2rayN و پنل‌های 3x-ui و Marzban، پس هر کانفیگی که اونجا کار کنه اینجا هم کار می‌کنه). Hysteria2 / TUIC و حالت TUN با <b>sing-box</b>. بار اول «دانلود هسته‌ها» رو بزن (هر دو از GitHub خودشون، روی هم حدود ۲۵ مگ). اگه GitHub باز نشد، <code>xray.exe</code> و <code>sing-box.exe</code> رو دستی بذار تو «پوشه‌ی هسته».</p>
+        <p><b>اتصال واقعی:</b> بعد از وصل شدن، برنامه از داخل تونل یه درخواست واقعی می‌فرسته؛ فقط اگه جواب بیاد «متصل» نشون میده. اگه سرور کار نکنه، به‌جای اتصال الکی دلیلش (فیلتر، کلید REALITY اشتباه، گواهی، DNS ...) رو می‌گه.</p>
+        <p><b>افزودن:</b> لینک‌ها (هر خط یکی) یا لینک ساب رو بچسبون و «افزودن» رو بزن. ساب‌ها گروه جدا دارن و با ⟳ آپدیت میشن؛ حجم مصرفی و تاریخ انقضا هم اگه پنل بفرسته نشون داده میشه.</p>
+        <p><b>تست:</b> «پینگ TCP» فقط باز بودن پورت سرور رو می‌سنجه. «تست واقعی» از داخل خود کانفیگ یه درخواست واقعی می‌فرسته (مثل Real delay تو v2rayN)؛ کانفیگی که اینجا عدد بگیره واقعاً کار می‌کنه.</p>
+        <p><b>حالت‌ها:</b> «پروکسی سیستم» پروکسی ویندوز رو خودکار تنظیم و موقع قطع برمی‌گردونه. «TUN» همه‌ی برنامه‌ها و بازی‌ها رو از تونل رد می‌کنه و باید برنامه با Run as administrator باز شده باشه. «فقط پورت» فقط SOCKS/HTTP روی 127.0.0.1 باز می‌کنه.</p>
+        <p>پشتیبانی: VLESS (REALITY، Vision، XHTTP، WS، gRPC، HTTPUpgrade، TCP-HTTP)، VMess، Trojan، Shadowsocks (+2022)، SOCKS با Xray · Hysteria2 (با port hopping)، Hysteria، TUIC، H2 و کانفیگ‌های insecure با sing-box. <b>Fragment</b> برای کانفیگ‌های TLS پشت CDN که با فیلترینگ SNI قطع میشن.</p>
+        <p><b>پورت و DNS:</b> همه اختیاریه. پورت خالی = 2080 (اگه اشغال بود یه پورت آزاد خودش انتخاب میشه). DNS تونل خالی = 1.1.1.1 با DoH. DNS مستقیم خالی = DNS سیستم. می‌تونی بنویسی <code>8.8.8.8</code>، <code>8.8.8.8:53</code>، <code>https://dns.google/dns-query</code> یا <code>tls://1.1.1.1</code>. «برگشت به پیش‌فرض» همه رو ریست می‌کنه.</p>
+        <p><b>جزئیات کانفیگ:</b> روی هر ردیف کلیک کن؛ پایین جدول همه چیز (آدرس، پورت، SNI، Host، Path، Fingerprint، ALPN، Flow ...) مثل v2rayN نشون داده میشه و می‌تونی کانفیگ هسته رو به‌صورت JSON کپی کنی.</p>
+        <p>موقع بستن برنامه اتصال قطع و پروکسی سیستم برگردونده میشه؛ حتی اگه برنامه کرش کنه، دفعه‌ی بعد که باز بشه پروکسی درست میشه.</p>
+      </div></details>
+
+      <details class="gd"><summary><i data-lucide="gamepad-2" width="16" height="16"></i>بازی دلخواه و پایش زنده</summary><div>
+        <p><b>قدم ۱:</b> تو تب بازی‌ها «افزودن بازی / سرور دلخواه» رو بزن و یه اسم بذار. <b>قدم ۲:</b> اگه بازیت تو «الگوی آماده» هست (کانتر، SA-MP، Minecraft، FiveM) روش کلیک کن تا پورت و روش خودش پر بشه. <b>قدم ۳:</b> آدرس سرور رو بنویس (مثلاً <code>1.2.3.4:27015</code>). <b>قدم ۴:</b> دکمه‌ی ⚡ «تست» رو بزن؛ اگه عدد سبز/زرد اومد درسته. مطمئن نیستی کدوم روش؟ «خودکار» رو بذار. آموزش کامل با دکمه‌ی «آموزش» داخل همون پنجره هست.</p>
+        <p>دکمه‌ی <b>پایش زنده</b> (کنار هر بازی تو جدول نتایج، یا تو پنجره‌ی ویرایش) همه‌ی سرورهای اون بازی رو هر ثانیه همزمان پینگ می‌کنه: پینگ لحظه‌ای، میانگین، جیتر، پکت لاس و نمودار ۶۰ نمونه‌ی آخر برای هر سرور.</p>
+      </div></details>
+
       <details class="gd"><summary><i data-lucide="gauge" width="16" height="16"></i>تست سرعت</summary><div>
         <p>با ۴ اتصال همزمان از Cloudflare دانلود و با ۳ اتصال آپلود می‌کنه. ۱.۵ ثانیه‌ی اول هر مرحله حساب نمیشه چون TCP هنوز به سرعت کامل نرسیده. آپلود فقط بایت‌هایی رو می‌شمره که سرور واقعاً دریافت کرده.</p>
         <p>هر تست حدود ۱۰۰ تا چند صد مگابایت مصرف می‌کنه (بسته به سرعتت). روی اینترنت حجمی حواست باشه. دکمه‌ی توقف هر لحظه کار می‌کنه.</p>
@@ -236,7 +327,7 @@
       </div></details>
 
       <details class="gd"><summary><i data-lucide="keyboard" width="16" height="16"></i>میانبرها</summary><div>
-        <div class="keys"><span><kbd>1</kbd>…<kbd>9</kbd> جابه‌جایی بین بخش‌ها</span><span><kbd>Enter</kbd> افزودن در فیلدها</span><span><kbd>Esc</kbd> بستن معرفی</span></div>
+        <div class="keys"><span><kbd>1</kbd>…<kbd>9</kbd> جابه‌جایی بین بخش‌ها · <kbd>0</kbd> تنظیمات</span><span><kbd>Enter</kbd> افزودن در فیلدها</span><span><kbd>Esc</kbd> بستن معرفی</span></div>
       </div></details>
     </section>
 
@@ -257,6 +348,69 @@
       </div>
       <div class="panel tight logview" id="logView"></div>
     </section>
+
+    <!-- SETTINGS -->
+    <section class="tab" id="tab-settings">
+      <div class="head"><h1>تنظیمات</h1><p>تنظیمات کلی برنامه. تنظیمات اتصال VPN (حالت، پورت، DNS) داخل خود بخش VPN هست.</p></div>
+
+      <div class="set-grid">
+        <div class="panel set-card">
+          <div class="label"><i data-lucide="info" width="15" height="15"></i>درباره‌ی برنامه</div>
+          <div class="about">
+            <img src="icon.svg" alt="" width="46" height="46">
+            <div><b>Packet<span>Yellow</span></b><div class="ver-line"><span class="num" id="setVer">v…</span><span class="beta">بتا</span></div></div>
+          </div>
+          <div class="kvs">
+            <div class="kv"><span>نسخه</span><b class="num" id="setVer2">…</b></div>
+            <div class="kv"><span>آخرین نسخه‌ی منتشرشده</span><b class="num" id="setLatest">…</b></div>
+            <div class="kv"><span>سیستم</span><b class="num" id="setOs">…</b></div>
+            <div class="kv"><span>دسترسی ادمین</span><b id="setAdmin">…</b></div>
+            <div class="kv"><span>هسته‌ها</span><b class="num" id="setCores">…</b></div>
+          </div>
+          <div class="set-btns">
+            <button class="btn y" id="setUpd"><i data-lucide="refresh-cw" width="15" height="15"></i>بررسی نسخه‌ی جدید</button>
+            <button class="btn" data-open="https://github.com/Mehdi138iimm/PacketYellow/releases"><i data-lucide="github" width="15" height="15"></i>صفحه‌ی Releases</button>
+            <button class="btn ghost" data-open="https://mehdi138iimm.github.io/PacketYellow/"><i data-lucide="globe" width="15" height="15"></i>سایت</button>
+          </div>
+        </div>
+
+        <div class="panel set-card">
+          <div class="label"><i data-lucide="sliders-horizontal" width="15" height="15"></i>عمومی</div>
+          <div class="vrow"><label for="setStart">صفحه‌ی شروع</label>
+            <select class="in" id="setStart">
+              <option value="dash">داشبورد زنده</option><option value="sites">تست سایت‌ها</option><option value="games">پینگ بازی‌ها</option><option value="speed">تست سرعت</option><option value="tunnel">VPN و کانفیگ‌ها</option><option value="dns">تست DNS</option><option value="net">اطلاعات شبکه</option>
+            </select></div>
+          <div class="vrow"><label>روش سنجش داشبورد</label>
+            <div class="seg" id="setMode" role="radiogroup"><button data-m="auto" role="radio">خودکار</button><button data-m="tcp" role="radio">TCP</button><button data-m="http" role="radio">HTTP</button></div></div>
+          <label class="chk"><input type="checkbox" id="setAutoUpd">بررسی خودکار نسخه‌ی جدید (هر ۶ ساعت از GitHub)</label>
+          <div class="set-btns"><button class="btn" id="setOnb"><i data-lucide="sparkles" width="15" height="15"></i>نمایش دوباره‌ی معرفی</button></div>
+        </div>
+
+        <div class="panel set-card">
+          <div class="label"><i data-lucide="shield" width="15" height="15"></i>VPN و عیب‌یابی<span class="beta">بتا</span></div>
+          <div class="kvs">
+            <div class="kv"><span>پروکسی ویندوز الان</span><b class="num" id="setProxy">…</b></div>
+          </div>
+          <p class="set-note">حالت TUN (همه‌ی برنامه‌ها و بازی‌ها) فقط وقتی کار می‌کنه که برنامه با دسترسی ادمین باز شده باشه.</p>
+          <div class="set-btns">
+            <button class="btn y" id="setAdminBtn"><i data-lucide="shield-alert" width="15" height="15"></i>باز کردن دوباره با دسترسی ادمین</button>
+            <button class="btn" id="setFixProxy" title="اگه بعد از بستن برنامه اینترنتت قطع شد"><i data-lucide="wifi" width="15" height="15"></i>اینترنتم قطع شده (خاموش کردن پروکسی جامانده)</button>
+            <button class="btn" id="setKill"><i data-lucide="circle-x" width="15" height="15"></i>بستن هسته‌های جامانده</button>
+            <button class="btn ghost" data-goto="tunnel"><i data-lucide="settings-2" width="15" height="15"></i>تنظیمات اتصال VPN</button>
+          </div>
+        </div>
+
+        <div class="panel set-card">
+          <div class="label"><i data-lucide="database" width="15" height="15"></i>داده‌ها</div>
+          <p class="set-note">کانفیگ‌ها، ساب‌ها، سایت‌ها، بازی‌ها و تاریخچه‌ی تست سرعت فقط روی همین کامپیوتر ذخیره میشن.</p>
+          <div class="set-btns">
+            <button class="btn" id="setExport"><i data-lucide="download" width="15" height="15"></i>پشتیبان‌گیری (فایل JSON)</button>
+            <label class="btn" for="setImport"><i data-lucide="upload" width="15" height="15"></i>بازگردانی از فایل</label><input type="file" id="setImport" accept=".json,application/json" hidden>
+            <button class="btn ghost danger" id="setReset"><i data-lucide="trash-2" width="15" height="15"></i>پاک کردن همه‌ی داده‌ها</button>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 </div>
 
@@ -264,7 +418,8 @@
   <span>پینگ <span class="num" id="sbPing">--</span></span>
   <span>IP <span class="num" id="sbIp">--</span></span>
   <span id="sbMode"></span>
-  <span class="r num" id="sbClock"></span>
+  <span class="r num" id="sbVer" title="نسخه‌ی برنامه"></span>
+  <span class="num" id="sbClock"></span>
 </footer>
 </div>
 
@@ -283,6 +438,50 @@
       <button class="btn ghost" id="onbSkip">رد کردن</button>
       <button class="btn" id="onbPrev">قبلی</button>
       <button class="btn y" id="onbNext">بعدی</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM GAME EDITOR -->
+<div id="gModal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="gmTitle">
+  <div class="modal-card gm-card">
+    <div class="modal-head"><div class="gm-titles"><h2 id="gmTitle">بازی دلخواه</h2><small>سرور بازی خودت رو اضافه کن و پینگ واقعیش رو ببین</small></div><button class="btn sm ghost" id="gmTutBtn"><i data-lucide="graduation-cap" width="15" height="15"></i>آموزش</button><button class="icon-btn" id="gmClose" aria-label="بستن"><i data-lucide="x" width="18" height="18"></i></button></div>
+
+    <div class="gm-tut" id="gmTut" hidden>
+      <div class="gm-steps">
+        <div class="gm-step"><span class="n">۱</span><div><b>یه اسم بذار</b><p>هر چی دوست داری. مثلاً «سرور کانتر بچه‌ها». فقط برای خودته.</p></div></div>
+        <div class="gm-step"><span class="n">۲</span><div><b>آدرس سرور رو پیدا کن</b><p>همون چیزیه که تو بازی برای وصل شدن می‌زنی. شکلش یا <code>1.2.3.4:27015</code> هست یا <code>play.example.com</code>.</p>
+          <ul>
+            <li><b>کانتر 1.6 / CS:S / CS:GO:</b> تو بازی کنسول (دکمه‌ی <code>~</code>) رو باز کن و <code>status</code> بزن؛ جلوی <i>udp/ip</i> آدرس رو می‌بینی.</li>
+            <li><b>SA-MP / open.mp:</b> تو لیست سرورها روی سرور کلیک کن؛ پایین پنجره نوشته <i>Address</i>.</li>
+            <li><b>Minecraft:</b> همون آدرسی که تو Multiplayer وارد کردی.</li>
+            <li><b>بقیه:</b> دیسکورد یا سایت سرور معمولاً آدرس رو نوشته.</li>
+          </ul></div></div>
+        <div class="gm-step"><span class="n">۳</span><div><b>روش سنجش رو انتخاب کن</b><p>مطمئن نیستی؟ <b>روی «خودکار» بذار</b>، خود برنامه درستش رو پیدا می‌کنه.</p>
+          <table class="gm-mtab"><tr><td><b>خودکار</b></td><td>اول پینگ واقعی (ICMP)، اگه جواب نداد TCP. برای بیشتر وقت‌ها بهترینه.</td></tr>
+          <tr><td><b>Steam / Source</b></td><td>کانتر 1.6، CS:S، CS:GO، TF2، Rust و بازی‌های Source. با پروتکل خود بازی می‌پرسه، پس دقیق‌ترینه. پورت پیش‌فرض 27015.</td></tr>
+          <tr><td><b>SA-MP</b></td><td>GTA San Andreas Multiplayer و open.mp. پورت پیش‌فرض 7777.</td></tr>
+          <tr><td><b>TCP</b></td><td>وقتی سرور پورت TCP باز داره (مثل Minecraft روی 25565). پورت لازمه.</td></tr>
+          <tr><td><b>ICMP</b></td><td>پینگ معمولی مثل cmd. بعضی سرورها جواب نمیدن.</td></tr></table></div></div>
+        <div class="gm-step"><span class="n">۴</span><div><b>«تست» بزن، بعد ذخیره</b><p>دکمه‌ی <i data-lucide="zap" width="13" height="13"></i> کنار هر سرور همون لحظه پینگ رو نشون میده. اگه عدد اومد یعنی درسته؛ «ذخیره و پایش زنده» رو بزن تا هر ثانیه نمودارش رو ببینی.</p></div></div>
+      </div>
+      <div class="gm-faq"><b>جواب نمیده؟</b> آدرس و پورت رو دوباره چک کن، روش رو عوض کن (مثلاً از ICMP به Steam)، و اگه VPN روشنه یه بار خاموشش کن؛ پینگ بازی از پشت VPN معنی نداره.</div>
+    </div>
+
+    <div class="vrow"><label for="gmName">نام بازی</label><input class="in fa-in" id="gmName" placeholder="مثلاً سرور کانتر خودمون"></div>
+
+    <div class="label" style="margin:16px 0 8px">الگوی آماده<span class="r">یه کلیک، پورت و روش خودکار پر میشه</span></div>
+    <div class="chips gm-presets" id="gmPresets"></div>
+
+    <div class="label" style="margin:16px 0 8px">سرورها<span class="r">IP یا دامنه · پورت اختیاری</span></div>
+    <div class="gm-cols"><span>نام سرور</span><span>آدرس</span><span>روش سنجش</span><span></span></div>
+    <div id="gmServers" class="gm-servers"></div>
+    <div class="gm-under"><button class="chip-btn" id="gmAddSrv">+ سرور دیگه</button><button class="chip-btn" id="gmTestAll"><i data-lucide="zap" width="13" height="13"></i> تست همه</button></div>
+
+    <div class="modal-foot">
+      <button class="btn ghost" id="gmDel">حذف بازی</button>
+      <button class="btn" id="gmSave">ذخیره</button>
+      <button class="btn y" id="gmLive"><i data-lucide="activity" width="15" height="15"></i>ذخیره و پایش زنده</button>
     </div>
   </div>
 </div>

@@ -84,9 +84,12 @@ async fn check_one(client: reqwest::Client, raw: String) -> SiteResult {
         }
     }
 
-    // 3) HTTP: always tried, a system proxy / VPN may reach it even if direct DNS/TCP failed
+    // 3) HTTP: always tried, a system proxy / VPN may reach it even if direct DNS/TCP failed.
+    // HEAD instead of GET: we only need the status code + final URL, not the page. A GET pulled the start
+    // of every page (often hundreds of KB) before the connection was dropped. HEAD also keeps the connection
+    // alive, so stage 4 reuses it instead of doing a new TLS handshake.
     let t = Instant::now();
-    match client.get(parsed.clone()).send().await {
+    match client.head(parsed.clone()).send().await {
         Ok(resp) => {
             r.http_ms = Some(ms_since(t));
             let code = resp.status().as_u16();

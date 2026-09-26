@@ -43,13 +43,23 @@ pub async fn tcp_rtt_err(addr: SocketAddr, to: Duration) -> Result<f64, String> 
 }
 
 pub async fn run_ping(host: &str, port: u16, count: u32, interval_ms: u64) -> Result<PingStats, String> {
+    run_ping_with(host, port, count, interval_ms, "tcp").await
+}
+
+/// Same as `run_ping` with a probe method (tcp / icmp / a2s / samp / auto), see `gameping`.
+pub async fn run_ping_with(host: &str, port: u16, count: u32, interval_ms: u64, method: &str) -> Result<PingStats, String> {
     let addr = resolve(host, port).await?;
     let to = Duration::from_millis(2500);
-    // Warm-up handshake, not counted: primes ARP / NAT / route caches so the first sample isn't inflated.
-    let _ = tcp_rtt(addr, to).await;
+    let method = match method {
+        "auto" => crate::gameping::pick_method(addr, port > 0).await,
+        "tcp" if port == 0 => "icmp", // no port given: only ICMP makes sense
+        m => m,
+    };
+    // Warm-up probe, not counted: primes ARP / NAT / route caches so the first sample isn't inflated.
+    let _ = crate::gameping::probe(method, addr, to).await;
     let mut samples = Vec::with_capacity(count as usize);
     for i in 0..count {
-        samples.push(tcp_rtt(addr, to).await);
+        samples.push(crate::gameping::probe(method, addr, to).await.ok());
         if i + 1 < count {
             sleep(Duration::from_millis(interval_ms)).await;
         }
@@ -57,6 +67,8 @@ pub async fn run_ping(host: &str, port: u16, count: u32, interval_ms: u64) -> Re
     let mut s = summarize(host, port, addr.ip().to_string(), samples);
     if is_fake_ip(&addr.ip()) {
         s.note = Some("fake-ip".into());
+    } else if method != "tcp" {
+        s.note = Some(method.into());
     }
     Ok(s)
 }
@@ -71,6 +83,8 @@ pub struct Target {
     pub name: String,
     pub host: String,
     pub port: u16,
+    #[serde(default)]
+    pub method: Option<String>,
 }
 
 /// Ping many targets (max 8 at once so they don't skew each other), fastest first.
@@ -78,7 +92,8 @@ pub struct Target {
 pub async fn ping_many(targets: Vec<Target>, count: Option<u32>) -> Vec<PingStats> {
     let count = count.unwrap_or(5).clamp(1, 50);
     let mut out: Vec<PingStats> = stream::iter(targets.into_iter().map(|t| async move {
-        match run_ping(&t.host, t.port, count, 200).await {
+        let method = crate::gameping::norm_method(t.method.as_deref());
+        match run_ping_with(&t.host, t.port, count, 200, method).await {
             Ok(mut s) => {
                 s.name = t.name;
                 s
