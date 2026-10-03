@@ -41,6 +41,8 @@ static NEXT_ID: AtomicU64 = AtomicU64::new(1);
 /// Plain HTTP on purpose: through the local HTTP proxy a response only comes back if the far end was
 /// really reached (an https URL would get "200 Connection established" from the local core itself).
 const TEST_URL: &str = "http://www.gstatic.com/generate_204";
+/// second opinion when gstatic is slow / blocked at the server's side
+const TEST_URL2: &str = "http://cp.cloudflare.com/generate_204";
 
 fn set_pids(p: Vec<u32>) {
     if let Ok(mut g) = CORE_PIDS.lock() {
@@ -287,11 +289,12 @@ async fn http_via(port: u16, url: &str, timeout: Duration) -> Result<u32, String
 /// Real check that traffic passes through the tunnel. Returns the delay of a warm request.
 async fn verify(port: u16) -> Result<u32, String> {
     let mut last = String::new();
-    for to in [6u64, 8, 10] {
-        match http_via(port, TEST_URL, Duration::from_secs(to)).await {
+    for (k, to) in [6u64, 8, 10].into_iter().enumerate() {
+        let url = if k == 1 { TEST_URL2 } else { TEST_URL };
+        match http_via(port, url, Duration::from_secs(to)).await {
             Ok(first) => {
                 // second request reuses the tunnel: closer to what browsing feels like
-                let warm = http_via(port, TEST_URL, Duration::from_secs(5)).await.unwrap_or(first);
+                let warm = http_via(port, url, Duration::from_secs(5)).await.unwrap_or(first);
                 return Ok(first.min(warm));
             }
             Err(e) => last = e,
@@ -362,7 +365,30 @@ fn explain(base: &str, logs: &[String], mode: &str) -> String {
     if tail.is_empty() { base.to_string() } else { format!("{base}: {tail}") }
 }
 
+fn mode_fa(m: &str) -> &'static str {
+    match m {
+        "tun" => "TUN",
+        "local" => "فقط پورت",
+        _ => "پروکسی سیستم",
+    }
+}
+
+/// UI event + tray colour (blue / red) + Windows notification.
 fn emit_state(app: &AppHandle, status: Option<Status>, error: Option<String>) {
+    match &status {
+        Some(s) => {
+            let tip = format!("PacketYellow · VPN وصله\n{}\n{} · 127.0.0.1:{}", s.name, mode_fa(&s.mode), s.local_port);
+            crate::tray::set(app, crate::tray::Vpn::On, &tip);
+            let delay = s.delay_ms.map(|d| format!(" · {d} ms")).unwrap_or_default();
+            crate::tray::notify(app, "VPN وصل شد ✅", &format!("{}\n{}{delay}", s.name, mode_fa(&s.mode)));
+        }
+        None => {
+            crate::tray::set(app, crate::tray::Vpn::Off, "PacketYellow · VPN وصل نیست");
+            if let Some(e) = &error {
+                crate::tray::notify(app, "VPN قطع شد ⚠️", e);
+            }
+        }
+    }
     let _ = app.emit("vpn://state", StateEvent { status, error });
 }
 
@@ -458,8 +484,18 @@ async fn start_cores(p: &link::Profile, opts: &config::Opts, dir: &Path, xr: Opt
     }
 }
 
+/// Tray turns yellow while connecting; back to blue if it fails (success -> red via `emit_state`).
 #[tauri::command]
 pub async fn vpn_connect(app: AppHandle, state: State<'_, VpnState>, raw: String, opts: Option<config::Opts>) -> Result<Status, String> {
+    crate::tray::set(&app, crate::tray::Vpn::Busy, "PacketYellow · در حال اتصال...");
+    let r = connect_inner(app.clone(), state, raw, opts).await;
+    if r.is_err() {
+        crate::tray::set(&app, crate::tray::Vpn::Off, "PacketYellow · VPN وصل نیست");
+    }
+    r
+}
+
+async fn connect_inner(app: AppHandle, state: State<'_, VpnState>, raw: String, opts: Option<config::Opts>) -> Result<Status, String> {
     let mut opts = opts.unwrap_or_default();
     let auto_port = opts.port == 0;
     if auto_port {

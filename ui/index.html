@@ -24,14 +24,15 @@
 <header class="titlebar" data-tauri-drag-region>
   <div class="win">
     <button aria-label="کوچک کردن" data-win="minimize"><i data-lucide="minus" width="15" height="15"></i></button>
-    <button aria-label="بستن" class="x" data-win="close"><i data-lucide="x" width="15" height="15"></i></button>
+    <button aria-label="بستن" title="بستن (برنامه کنار ساعت روشن می‌مونه)" class="x" data-win="close"><i data-lucide="x" width="15" height="15"></i></button>
   </div>
-  <div class="logo" data-tauri-drag-region><img src="icon.svg" alt="PacketYellow" class="logo-icon" style="width:26px;height:26px;"><b>Packet<span>Yellow</span></b><span class="ver num" id="tVer" title="نسخه‌ی برنامه">v…</span></div>
+  <div class="logo" data-tauri-drag-region><img src="icon.svg" alt="PacketYellow" class="logo-icon" style="width:26px;height:26px;"><b>Packet<span>Yellow</span></b><span class="ver num" id="tVer" title="نسخه‌ی برنامه">v…</span><span class="chan" id="tChan" hidden></span></div>
   <div class="pills" data-tauri-drag-region>
     <span class="pill"><span class="sdot" id="hdot"></span><span id="hstat">در حال اتصال</span></span>
     <span class="pill"><i data-lucide="building-2" width="14" height="14"></i><span id="hisp">...</span></span>
     <span class="pill"><i data-lucide="map-pin" width="14" height="14"></i><span id="hloc">...</span></span>
     <button class="pill upd" id="hupd" hidden><i data-lucide="arrow-down-circle" width="14" height="14"></i><span></span></button>
+    <button class="pill vs" id="hvs" data-st="off" title="وضعیت VPN خود برنامه · کلیک = رفتن به بخش VPN"><span class="vsdot"></span><span id="hvsTxt">VPN قطع</span></button>
     <span class="pill vpn" id="hvpn" hidden><i data-lucide="shield-check" width="14" height="14"></i>VPN</span>
   </div>
 </header>
@@ -183,6 +184,7 @@
             <div class="st"><span class="num" id="vDelay">--</span><span>تاخیر واقعی</span></div>
             <div class="st"><span class="num" id="vIp">--</span><span>IP خروجی</span></div>
           </div>
+          <div class="vquota" id="vQuota" hidden></div>
         </div>
         <div class="panel vset">
           <div class="label">حالت اتصال</div>
@@ -358,7 +360,7 @@
           <div class="label"><i data-lucide="info" width="15" height="15"></i>درباره‌ی برنامه</div>
           <div class="about">
             <img src="icon.svg" alt="" width="46" height="46">
-            <div><b>Packet<span>Yellow</span></b><div class="ver-line"><span class="num" id="setVer">v…</span><span class="beta">بتا</span></div></div>
+            <div><b>Packet<span>Yellow</span></b><div class="ver-line"><span class="num" id="setVer">v…</span><span class="chan" id="setChan" hidden></span></div></div>
           </div>
           <div class="kvs">
             <div class="kv"><span>نسخه</span><b class="num" id="setVer2">…</b></div>
@@ -382,7 +384,7 @@
             </select></div>
           <div class="vrow"><label>روش سنجش داشبورد</label>
             <div class="seg" id="setMode" role="radiogroup"><button data-m="auto" role="radio">خودکار</button><button data-m="tcp" role="radio">TCP</button><button data-m="http" role="radio">HTTP</button></div></div>
-          <label class="chk"><input type="checkbox" id="setAutoUpd">بررسی خودکار نسخه‌ی جدید (هر ۶ ساعت از GitHub)</label>
+          <label class="chk"><input type="checkbox" id="setAutoUpd">خبر دادن نسخه‌ی جدید (هر ۲ ساعت از GitHub · فقط خبر می‌ده، خودش چیزی دانلود یا نصب نمی‌کنه)</label>
           <div class="set-btns"><button class="btn" id="setOnb"><i data-lucide="sparkles" width="15" height="15"></i>نمایش دوباره‌ی معرفی</button></div>
         </div>
 

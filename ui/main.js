@@ -1,10 +1,10 @@
-// PacketYellow v0.5.1 (beta) frontend.
+// PacketYellow v0.5.3 (beta) frontend.
 // IMPORTANT: every measurement happens in Rust. This file never times anything; it only renders.
 const T = window.__TAURI__;
 const IN_APP = !!(T && T.core);
 const rawInvoke = (cmd, args) => IN_APP ? T.core.invoke(cmd, args) : Promise.reject('این بخش فقط داخل اپ PacketYellow کار می‌کنه');
 // every command goes through here: failures and slow calls land in the «لاگ» tab
-const QUIET = new Set(['get_logs', 'clear_logs', 'log_from_ui', 'stop_monitor', 'speed_cancel', 'game_live_stop']);
+const QUIET = new Set(['check_update', 'get_logs', 'clear_logs', 'log_from_ui', 'stop_monitor', 'speed_cancel', 'game_live_stop']);
 async function invoke(cmd, args) {
   const t0 = performance.now();
   try {
@@ -666,6 +666,74 @@ const NO_CORE_MSG = 'هسته‌ی لازم نصب نیست. «دانلود هس
 const vid = () => 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 const saveVProfiles = () => store.set('vpnProfiles', vpn.profiles);
 const saveVSubs = () => store.set('vpnSubs', vpn.subs);
+/* ---------- subscription quota (used / total / expiry) of the selected / connected config ---------- */
+vpn.qBase = {}; // sub id -> this connection's traffic at the moment the quota was last fetched
+const sessTotal = () => vpn.status && vpn.traffic ? vpn.traffic.upTotal + vpn.traffic.downTotal : 0;
+const vQuotaProfile = () => (vpn.status && vpn.profiles.find(x => x.raw === vpn.status.raw)) || vSelected();
+const subOf = p => p?.sub ? vpn.subs.find(s => s.id === p.sub) : null;
+const agoFa = t => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? 'همین الان' : m < 60 ? m + ' دقیقه پیش' : m < 1440 ? Math.round(m / 60) + ' ساعت پیش' : Math.round(m / 1440) + ' روز پیش'; };
+async function refreshSubInfo(sub, quiet) {
+  if (!sub || !IN_APP || sub.qBusy) return;
+  sub.qBusy = true; renderVQuota();
+  try {
+    const r = await invoke('vpn_fetch_sub', { url: sub.url });
+    sub.info = r.info || null; if (r.title) sub.name = r.title; sub.updated = Date.now();
+    vpn.qBase[sub.id] = sessTotal();
+    if (!quiet) toast(sub.info ? 'حجم و انقضا آپدیت شد' : 'سرور ساب اطلاعات حجم نمی‌فرسته');
+  } catch (e) { if (!quiet) toast('آپدیت حجم نشد: ' + errText(e)); }
+  finally { delete sub.qBusy; saveVSubs(); renderVGroups(); renderVQuota(); icons(); }
+}
+function renderVQuota() {
+  const el = $('vQuota'); if (!el) return;
+  const p = vQuotaProfile();
+  if (!p) { el.hidden = true; return; }
+  el.hidden = false;
+  const sub = subOf(p);
+  if (!sub) { el.innerHTML = `<div class="qhead"><i data-lucide="database" width="15" height="15"></i><b>حجم کانفیگ</b><small>این کانفیگ دستی اضافه شده؛ حجم و تاریخ انقضا فقط از «لینک ساب» میاد. لینک ساب سرویست رو اضافه کن تا اینجا نشون داده بشه.</small></div>`; return; }
+  const btn = `<button class="icon-btn" data-qr="${sub.id}" title="آپدیت حجم از سرور ساب" aria-label="آپدیت حجم"${sub.qBusy ? ' disabled' : ''}><i data-lucide="refresh-cw" width="14" height="14"${sub.qBusy ? ' class="spin-i"' : ''}></i></button>`;
+  const head = `<div class="qhead"><i data-lucide="database" width="15" height="15"></i><b>${esc(sub.name || 'ساب')}</b><small>${sub.updated ? 'آپدیت: ' + agoFa(sub.updated) : ''}</small>${btn}</div>`;
+  const i = sub.info;
+  if (!i) { el.innerHTML = head + '<small class="qnone">سرور این ساب اطلاعات حجم/انقضا نفرستاده (هدر subscription-userinfo نداره).</small>'; return; }
+  const live = vpn.status && vpn.status.raw === p.raw ? Math.max(0, sessTotal() - (vpn.qBase[sub.id] ?? sessTotal())) : 0;
+  const used = (i.upload || 0) + (i.download || 0) + live;
+  const total = i.total || 0;
+  const left = total ? Math.max(0, total - used) : null;
+  const pct = total ? Math.min(100, used / total * 100) : 0;
+  const lvl = !total ? 'good' : pct < 70 ? 'good' : pct < 90 ? 'warn' : 'bad';
+  let exp = 'نامحدود', expCls = '';
+  if (i.expire) {
+    const ms = i.expire * 1000 - Date.now(), d = Math.ceil(ms / 86400000);
+    const date = new Date(i.expire * 1000).toLocaleDateString('fa-IR');
+    exp = ms <= 0 ? `منقضی شده (${date})` : d <= 1 ? `کمتر از ۱ روز · ${date}` : `${d} روز مونده · ${date}`;
+    expCls = ms <= 0 ? 'bad' : d <= 3 ? 'warn' : '';
+  }
+  el.innerHTML = head + `
+    <div class="qbar ${lvl}"><span style="width:${total ? pct.toFixed(1) : 0}%"></span></div>
+    <div class="qgrid">
+      <div><span class="num">${fmtBytes(used)}</span><span>مصرف شده${live ? ' (زنده)' : ''}</span></div>
+      <div><span class="num">${total ? fmtBytes(total) : 'نامحدود'}</span><span>کل حجم</span></div>
+      <div><span class="num ${lvl === 'good' ? '' : lvl}">${left == null ? '∞' : fmtBytes(left)}</span><span>باقی‌مونده${total ? ` (${(100 - pct).toFixed(0)}%)` : ''}</span></div>
+      <div><span class="num">${fmtBytes(i.upload || 0)} / ${fmtBytes(i.download || 0)}</span><span>آپلود / دانلود ساب</span></div>
+      <div class="wide"><span class="num ${expCls}">${exp}</span><span>انقضا</span></div>
+    </div>`;
+}
+$('vQuota').onclick = e => { const b = e.target.closest('[data-qr]'); if (b) refreshSubInfo(vpn.subs.find(s => s.id === b.dataset.qr)); };
+let qTimer = 0;
+function quotaAuto(on) {
+  clearInterval(qTimer); qTimer = 0;
+  if (!on) return;
+  setTimeout(() => refreshSubInfo(subOf(vQuotaProfile()), true), 1500); // right after connecting (goes through the tunnel)
+  qTimer = setInterval(() => refreshSubInfo(subOf(vQuotaProfile()), true), 10 * 60 * 1000);
+}
+/* ---------- header pill: same colours as the tray icon (blue = off, yellow = connecting, red = on) ---------- */
+function renderVBadge() {
+  const s = vpn.status, st = vpn.busy && !s ? 'busy' : s ? 'on' : 'off';
+  const el = $('hvs'); el.dataset.st = st;
+  $('hvsTxt').textContent = st === 'busy' ? 'در حال اتصال...' : s ? `VPN وصله · ${s.name}` : 'VPN قطع';
+  el.title = s ? `${s.name} · ${s.proto} · 127.0.0.1:${s.localPort} · کلیک = رفتن به بخش VPN` : 'وضعیت VPN خود برنامه · کلیک = رفتن به بخش VPN';
+  if (s) $('hvpn').hidden = true; // no second "VPN" pill for our own tunnel
+}
+$('hvs').onclick = () => show('tunnel');
 const vRes = id => { let r = vpn.res.get(id); if (!r) vpn.res.set(id, r = {}); return r; };
 const fmtBytes = b => b == null ? '--' : b < 1024 ? b + ' B' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB' : b < 1073741824 ? (b / 1048576).toFixed(1) + ' MB' : (b / 1073741824).toFixed(2) + ' GB';
 const fmtDur = ms => { const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s % 60).padStart(2, '0'); };
@@ -775,6 +843,7 @@ $('vDetail').onclick = async e => {
   try { copy(JSON.stringify(await invoke('vpn_inspect', { raw: p.raw }), null, 2), 'کانفیگ JSON کپی شد'); } catch (err) { toast('خطا: ' + errText(err)); }
 };
 function renderVConn() {
+  renderVBadge(); renderVQuota();
   const s = vpn.status, sel = vSelected();
   $('vConn').dataset.state = vpn.busy ? 'busy' : s ? 'on' : 'off';
   $('vBtn').disabled = vpn.busy && !s;
@@ -835,6 +904,7 @@ async function vConnect(p) {
   vpn.busy = true; vpn.check = null; vpn.traffic = null; vErr(''); renderVpn();
   try {
     vpn.status = await invoke('vpn_connect', { raw: p.raw, opts: vpn.opts });
+    quotaAuto(true);
     toast(`وصل شد و تست شد · ${p.name}${vpn.status?.delayMs ? ' · ' + vpn.status.delayMs + ' ms' : ''}`);
     setTimeout(() => pollNet(), 600); // the dashboard switches to HTTP mode through the tunnel
   } catch (e) {
@@ -849,7 +919,7 @@ async function vDisconnect() {
   if (!vpn.status || vpn.busy) return;
   vpn.busy = true; renderVpn();
   try { await invoke('vpn_disconnect'); } catch {}
-  vpn.status = null; vpn.check = null; vpn.traffic = null; vpn.busy = false; renderVpn();
+  vpn.status = null; vpn.check = null; vpn.traffic = null; vpn.busy = false; quotaAuto(false); renderVpn();
   toast('اتصال قطع شد'); setTimeout(() => pollNet(), 600);
 }
 $('vBtn').onclick = () => vpn.status ? vDisconnect() : vConnect(vSelected());
@@ -952,10 +1022,17 @@ async function initVpn() {
   if (!IN_APP) return;
   listen('vpn://state', e => {
     const { status, error } = e.payload;
-    vpn.status = status; if (!status) { vpn.check = null; vpn.traffic = null; }
+    vpn.status = status; if (!status) { vpn.check = null; vpn.traffic = null; quotaAuto(false); }
     if (error) { vErr(error); toast('اتصال VPN قطع شد'); setTimeout(() => pollNet(), 600); }
     renderVpn();
   });
+  // from the tray popup: connect / disconnect without opening the window (opens it only if no config is picked)
+  listen('tray://toggle', () => {
+    if (vpn.status) return vDisconnect();
+    if (!vSelected()) { invoke('tray_action', { action: 'goto:tunnel' }).catch(() => {}); return toast('اول یه کانفیگ انتخاب کن'); }
+    vConnect(vSelected());
+  });
+  listen('tray://goto', e => { if (tabs.some(b => b.dataset.tab === e.payload)) show(e.payload); });
   listen('vpn://stats', e => { vpn.traffic = e.payload; if (curTab === 'tunnel') renderVConn(); });
   listen('vpn://warn', e => { vErr(String(e.payload)); toast('پروکسی سیستم تنظیم نشد'); });
   listen('vpn://check', e => { vpn.check = e.payload; renderVConn(); if (e.payload.delayMs == null) uiLog('warn', 'vpn', 'تست تاخیر بعد از اتصال: ' + (e.payload.error || 'بدون پاسخ')); });
@@ -1082,7 +1159,7 @@ function renderNet() {
   $('netGrid').querySelectorAll('[data-cp]').forEach(b => b.onclick = () => copy(b.dataset.cp, b.dataset.cp + ' کپی شد'));
   $('ifRows').innerHTML = n.interfaces.filter(i => !i.loopback).map(i => `<tr><td>${esc(i.name)}${i.primary ? '<span class="badge y">اصلی</span>' : ''}${i.vpn ? '<span class="badge g">VPN</span>' : ''}${i.desc ? `<small>${esc(i.desc)}</small>` : ''}</td><td class="num">${esc(i.ip)}${i.mac ? `<small>${esc(i.mac)}</small>` : ''}</td><td class="num">${esc(i.netmask || '--')}</td><td class="num">${esc(i.gateway || '--')}</td><td>${esc(i.kind)} · ${i.v6 ? 'IPv6' : 'IPv4'}${i.speed ? `<small>${esc(i.speed)}${i.mtu ? ' · MTU ' + i.mtu : ''}</small>` : ''}</td></tr>`).join('') || emptyRow(5, 'network', 'اینترفیسی پیدا نشد');
   $('hisp').textContent = n.operatorFa || n.isp || '--'; $('hloc').textContent = n.city || n.country || n.location || '--'; $('sbIp').textContent = n.publicIp || n.publicIp6 || '--';
-  $('hvpn').hidden = !n.vpn;
+  $('hvpn').hidden = !n.vpn || !!vpn.status;
   renderMode(); icons();
 }
 let netLoading = null;
@@ -1220,33 +1297,59 @@ async function fetchLatest(cur) {
   const best = list.sort((x, y) => newer(x.tag_name, y.tag_name) ? -1 : newer(y.tag_name, x.tag_name) ? 1 : 0)[0];
   return { current: cur, latest: best?.tag_name || null, url: best?.html_url || `https://github.com/${REPO}/releases`, prerelease: !!best?.prerelease, newer: !!best && newer(best.tag_name, cur) };
 }
-let updRetry = 0, updShown = '';
+// NOTE: this only CHECKS GitHub and shows a button to the download page. Nothing is downloaded or installed.
+let updRetry = 0, updShown = '', updOkShown = false, updState = null; // updState: {ok, latest, newer, prerelease} | {ok:false, err}
 async function checkUpdate(manual = false) {
   const cur = await getVersion();
   let u;
   try { u = await fetchLatest(cur); }
   catch (err) {
-    if (manual) toast('اتصال به گیت‌هاب نشد: ' + errText(err));
-    // auto check failed (filtering, no internet yet, rate limit): try again soon instead of waiting 6 hours
+    updState = { ok: false, err: errText(err) }; if (curTab === 'settings') renderSettings();
+    if (manual) { toast(errText(err)); uiLog('warn', 'update', 'بررسی نسخه‌ی جدید نشد: ' + errText(err)); }
+    // auto check failed (filtering, no internet yet, rate limit): quietly try again soon
     else if (updRetry < 6) { clearTimeout(checkUpdate._t); checkUpdate._t = setTimeout(checkUpdate, Math.min(30, 2 ** updRetry) * 60000); updRetry++; }
     return;
   }
   updRetry = 0;
-  latestTag = u.latest || null; if (curTab === 'settings') renderSettings();
-  if (!u.newer) { $('hupd').hidden = true; if (manual) toast(`آخرین نسخه رو داری (v${cur})`); return; }
-  const tag = u.latest, label = 'نسخه‌ی جدید ' + tag + (u.prerelease ? ' (بتا)' : '');
+  latestTag = u.latest || null;
+  updState = { ok: true, latest: u.latest, newer: u.newer, prerelease: u.prerelease };
+  if (u.currentChannel) { store.set('chan:' + cur, u.currentChannel); setChannel(u.currentChannel); }
+  else if (u.latest && newer(cur, u.latest)) setChannel('dev');
+  if (curTab === 'settings') renderSettings();
+  if (!u.newer) {
+    $('hupd').hidden = true;
+    if (manual || !updOkShown) toast(`✓ آخرین نسخه رو داری: v${cur}${chanLabel(u.currentChannel) ? ' · ' + chanLabel(u.currentChannel) : ''}`);
+    updOkShown = true;
+    return;
+  }
+  const tag = u.latest, label = 'نسخه‌ی جدید ' + tag + (u.prerelease ? ' (بتا)' : ' (ریلیز)');
   const b = $('hupd'); b.hidden = false; b.querySelector('span').textContent = label;
-  b.title = `الان: v${cur} · کلیک کن تا صفحه‌ی دانلود باز بشه`; b.onclick = () => openUrl(u.url);
+  b.title = `الان: v${cur} · کلیک کن تا صفحه‌ی دانلود باز بشه (آپدیت خودکار نیست)`; b.onclick = () => openUrl(u.url);
   icons();
   if (manual || updShown !== tag) {
-    toast(`${label} منتشر شده! از دکمه‌ی زرد بالا بگیرش`);
+    toast(`${label} منتشر شده! از دکمه‌ی زرد بالا دانلودش کن`);
     if (updShown !== tag) uiLog('info', 'ui', `نسخه‌ی جدید منتشر شده: ${tag} (نسخه‌ی فعلی v${cur})`);
     updShown = tag;
   }
 }
 
+/* release channel of the INSTALLED version, read from GitHub (Pre-release = بتا, normal release = ریلیز) */
+const CHAN = { stable: 'ریلیز', beta: 'بتا', dev: 'هنوز منتشر نشده' };
+const chanLabel = c => CHAN[c] || '';
+let channel = null;
+function setChannel(c) {
+  channel = c;
+  const l = chanLabel(c);
+  for (const id of ['tChan', 'setChan']) { const el = $(id); if (!el) continue; el.hidden = !l; el.textContent = l; el.className = (id === 'setChan' ? 'chan' : 'chan') + ' ' + (c || ''); el.title = c === 'stable' ? 'نسخه‌ی پایدار (Release در گیت‌هاب)' : c === 'beta' ? 'نسخه‌ی آزمایشی (Pre-release در گیت‌هاب)' : 'این نسخه هنوز توی گیت‌هاب منتشر نشده'; }
+  getVersion().then(v => {
+    $('sbVer').textContent = `PacketYellow v${v}${l ? ' · ' + l : ''}`;
+    document.title = `PacketYellow v${v}${l ? ' (' + l + ')' : ''}`;
+    if ($('setVer2')) $('setVer2').textContent = `${v}${l ? ' (' + l + ')' : ''}`;
+  });
+}
+
 /* ---------- app version + settings tab ---------- */
-const FALLBACK_VER = '0.5.1';
+const FALLBACK_VER = '0.5.3';
 let appInfo = null, latestTag = null;
 async function getVersion() {
   if (appInfo?.version) return appInfo.version;
@@ -1256,8 +1359,8 @@ async function getVersion() {
 async function loadAppInfo() {
   if (IN_APP) { try { appInfo = await invoke('app_info'); } catch {} }
   const v = 'v' + (appInfo?.version || await getVersion());
-  $('tVer').textContent = v + ' بتا'; $('sbVer').textContent = `PacketYellow ${v} · بتا`;
-  document.title = `PacketYellow ${v} (بتا)`;
+  $('tVer').textContent = v;
+  setChannel(store.get('chan:' + v.slice(1), null)); // last known from GitHub, refreshed by checkUpdate
   if (curTab === 'settings') renderSettings();
 }
 async function relaunchAdmin() {
@@ -1266,8 +1369,13 @@ async function relaunchAdmin() {
 }
 function renderSettings() {
   const a = appInfo, v = a?.version || FALLBACK_VER;
-  $('setVer').textContent = 'v' + v; $('setVer2').textContent = `${v} (بتا)`;
-  $('setLatest').textContent = latestTag ? latestTag + (newer(latestTag, v) ? ' · جدیدتره!' : ' · به‌روزی') : '—';
+  $('setVer').textContent = 'v' + v; $('setVer2').textContent = `${v}${chanLabel(channel) ? ' (' + chanLabel(channel) + ')' : ''}`;
+  const L = $('setLatest');
+  if (!updState) { L.textContent = 'در حال بررسی...'; L.style.color = ''; }
+  else if (!updState.ok) { L.textContent = 'بررسی نشد (گیت‌هاب در دسترس نبود)'; L.title = updState.err; L.style.color = 'var(--warn)'; }
+  else if (!latestTag) { L.textContent = '—'; L.style.color = ''; }
+  else if (updState.newer) { L.textContent = `${latestTag} (${updState.prerelease ? 'بتا' : 'ریلیز'}) · جدیدتره!`; L.style.color = 'var(--y)'; }
+  else { L.textContent = `${latestTag} · آخرین نسخه رو داری ✓`; L.style.color = 'var(--good)'; }
   $('setOs').textContent = a ? `${a.os} · ${a.arch}` : navigator.platform || '—';
   $('setAdmin').textContent = !a ? '—' : a.admin ? 'بله (TUN آماده‌ست)' : 'نه (برای TUN لازمه)';
   $('setAdmin').style.color = a ? (a.admin ? 'var(--good)' : 'var(--warn)') : '';

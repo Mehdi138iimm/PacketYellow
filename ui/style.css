@@ -305,7 +305,7 @@ kbd{font:600 var(--fs-xs) var(--mono);background:var(--b3);border:1px solid var(
 
 @media (max-width:980px){
   .dash-grid,.games-wrap,.speed{grid-template-columns:1fr}
-  .pills .pill:not(:first-child){display:none}
+  .pills .pill:not(:first-child):not(.vs){display:none}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
@@ -555,3 +555,34 @@ select.in{direction:rtl;font-family:inherit;cursor:pointer}
 .btn.danger{color:var(--bad)} .btn.danger:hover{background:var(--bad-bg);color:var(--bad)}
 label.btn{user-select:none}
 @media (max-width:1100px){.set-grid{grid-template-columns:1fr}}
+
+/* VPN state pill in the title bar (same colours as the tray icon) */
+.pill.vs{border:0;cursor:pointer;font:inherit;font-size:var(--fs-xs);--vs:oklch(0.72 0.15 250);background:color-mix(in oklch,var(--vs) 16%,transparent);color:var(--vs);max-width:260px}
+.pill.vs #hvsTxt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pill.vs[data-st=busy]{--vs:var(--y)} .pill.vs[data-st=on]{--vs:oklch(0.66 0.21 25)}
+.pill.vs .vsdot{width:8px;height:8px;border-radius:50%;background:var(--vs);flex:none}
+.pill.vs[data-st=busy] .vsdot{animation:vsblink 1s ease-in-out infinite}
+.pill.vs:hover{background:color-mix(in oklch,var(--vs) 26%,transparent)}
+@keyframes vsblink{50%{opacity:.25}}
+/* subscription quota */
+.vquota{grid-column:1/-1;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.vquota .qhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vquota .qhead svg{color:var(--t3)} .vquota .qhead small{color:var(--t3);flex:1}
+.vquota .qnone{color:var(--t3)}
+.vquota .qbar{height:8px;border-radius:4px;background:var(--b2);overflow:hidden}
+.vquota .qbar span{display:block;height:100%;border-radius:4px;background:var(--good);transition:width .4s}
+.vquota .qbar.warn span{background:var(--y)} .vquota .qbar.bad span{background:var(--bad)}
+.vquota .qgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.vquota .qgrid>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.vquota .qgrid .num{font-size:var(--fs-md);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vquota .qgrid>div>span:last-child{color:var(--t3);font-size:var(--fs-xs)}
+.vquota .num.warn{color:var(--y)} .vquota .num.bad{color:var(--bad)}
+.spin-i{animation:sp 1s linear infinite}
+@media (max-width:1180px){.vquota .qgrid{grid-template-columns:repeat(3,1fr)}}
+@media (prefers-reduced-motion:reduce){.pill.vs[data-st=busy] .vsdot,.spin-i{animation:none}}
+
+/* release channel badge (from GitHub: Release = ریلیز, Pre-release = بتا) */
+.chan{display:inline-flex;align-items:center;height:18px;padding:0 7px;border-radius:9px;font-size:11px;font-weight:700;line-height:18px;white-space:nowrap;margin-inline-start:6px;background:var(--b2);color:var(--t3)}
+.chan.stable{background:var(--good-bg);color:var(--good)}
+.chan.beta{background:var(--warn-bg);color:var(--warn)}
+.chan.dev{background:var(--b2);color:var(--t2)}

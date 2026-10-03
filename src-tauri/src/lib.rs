@@ -9,6 +9,7 @@ mod sites;
 mod speed;
 mod stats;
 mod sys;
+mod tray;
 mod vpn;
 
 
@@ -22,11 +23,16 @@ pub fn run() {
     }));
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
         .manage(monitor::MonitorState::default())
         .manage(gameping::LiveState::default())
         .manage(vpn::VpnState::default())
+        .on_window_event(|w, ev| tray::on_window_event(w, ev))
         .setup(|app| {
             applog::init(app.handle().clone());
+            if let Err(e) = tray::init(app.handle()) {
+                applog::warn("app", format!("آیکون کنار ساعت ساخته نشد: {e}"));
+            }
             vpn::init(app.handle());
             let v = app.package_info().version.to_string();
             applog::info("app", format!("PacketYellow v{v} (بتا) شروع شد · {} {} · ادمین: {}", std::env::consts::OS, std::env::consts::ARCH, if sys::is_admin() { "بله" } else { "نه" }));
@@ -67,6 +73,7 @@ pub fn run() {
             sys::app_info,
             sys::app_relaunch_admin,
             sys::check_update,
+            tray::tray_action,
         ])
         .build(tauri::generate_context!())
         .expect("error while building PacketYellow")

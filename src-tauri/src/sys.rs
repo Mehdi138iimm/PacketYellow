@@ -6,8 +6,6 @@ use tauri::AppHandle;
 #[serde(rename_all = "camelCase")]
 pub struct AppInfo {
     version: String,
-    /// shown next to the version: this build is still a beta
-    channel: &'static str,
     os: &'static str,
     arch: &'static str,
     admin: bool,
@@ -33,7 +31,6 @@ pub fn is_admin() -> bool {
 pub fn app_info(app: AppHandle) -> AppInfo {
     AppInfo {
         version: app.package_info().version.to_string(),
-        channel: "beta",
         os: std::env::consts::OS,
         arch: std::env::consts::ARCH,
         admin: is_admin(),
@@ -97,8 +94,11 @@ pub struct UpdateInfo {
     current: String,
     latest: Option<String>,
     url: String,
+    /// the latest release is marked «Pre-release» on GitHub
     prerelease: bool,
     newer: bool,
+    /// "stable" / "beta": how the INSTALLED version is published on GitHub (None = this version isn't on GitHub yet)
+    current_channel: Option<&'static str>,
     /// "api" or "atom": which source answered
     source: &'static str,
 }
@@ -117,10 +117,15 @@ fn is_newer(a: &str, b: &str) -> bool {
     ver_num(a) > ver_num(b)
 }
 
+fn chan(pre: bool) -> &'static str {
+    if pre { "beta" } else { "stable" }
+}
+
 struct Rel {
     tag: String,
     url: String,
-    prerelease: bool,
+    /// None = unknown (the atom feed doesn't say)
+    prerelease: Option<bool>,
 }
 
 async fn from_api(c: &reqwest::Client) -> Result<Vec<Rel>, String> {
@@ -142,7 +147,7 @@ async fn from_api(c: &reqwest::Client) -> Result<Vec<Rel>, String> {
             Some(Rel {
                 tag: x["tag_name"].as_str()?.to_string(),
                 url: x["html_url"].as_str().unwrap_or_default().to_string(),
-                prerelease: x["prerelease"].as_bool().unwrap_or(false),
+                prerelease: Some(x["prerelease"].as_bool().unwrap_or(false)),
             })
         })
         .collect())
@@ -166,7 +171,7 @@ async fn from_atom(c: &reqwest::Client) -> Result<Vec<Rel>, String> {
         let end = after.find(['"', '<', '\'', ' ']).unwrap_or(after.len());
         let tag = after[..end].to_string();
         if !tag.is_empty() && !out.iter().any(|x| x.tag == tag) {
-            out.push(Rel { url: format!("https://github.com/{REPO}/releases/tag/{tag}"), tag, prerelease: false });
+            out.push(Rel { url: format!("https://github.com/{REPO}/releases/tag/{tag}"), tag, prerelease: None });
         }
         rest = &after[end..];
     }
@@ -176,38 +181,79 @@ async fn from_atom(c: &reqwest::Client) -> Result<Vec<Rel>, String> {
     Ok(out)
 }
 
-/// Latest published release, pre-releases included, compared with the running version.
+/// The atom feed has no «Pre-release» flag, so read it from the release page itself.
+async fn page_prerelease(c: &reqwest::Client, tag: &str) -> Option<bool> {
+    let r = c.get(format!("https://github.com/{REPO}/releases/tag/{tag}")).send().await.ok()?;
+    if !r.status().is_success() {
+        return None;
+    }
+    let body = r.text().await.ok()?;
+    Some(body.contains(">Pre-release<") || (body.contains("Label--warning") && body.contains("Pre-release")))
+}
+
+/// Network errors in plain Persian (the raw text still goes to the log as a warning).
+fn friendly(e: &str) -> String {
+    let l = e.to_lowercase();
+    if l.contains("timed out") || l.contains("timeout") {
+        "گیت‌هاب جواب نداد (تایم‌اوت). احتمالاً گیت‌هاب روی اینترنتت کُنده یا فیلتره؛ با VPN دوباره امتحان کن".into()
+    } else if l.contains("http 403") || l.contains("http 429") {
+        "گیت‌هاب فعلاً اجازه‌ی درخواست نمی‌ده (محدودیت تعداد درخواست). چند دقیقه‌ی دیگه دوباره امتحان کن".into()
+    } else if l.contains("http 5") {
+        "سرور گیت‌هاب الان خطا می‌ده (HTTP 5xx). چند دقیقه‌ی دیگه دوباره امتحان کن".into()
+    } else if l.contains("dns") || l.contains("resolve") || l.contains("connect") {
+        "به گیت‌هاب وصل نشد. اینترنت یا فیلترینگ رو چک کن، یا با VPN امتحان کن".into()
+    } else {
+        "بررسی نسخه‌ی جدید نشد. بعداً دوباره امتحان کن".into()
+    }
+}
+
+/// ONLY CHECKS: reads the release list from GitHub and compares it with the installed version.
+/// Nothing is downloaded or installed; the UI just shows a button that opens the download page.
 #[tauri::command]
 pub async fn check_update(app: AppHandle) -> Result<UpdateInfo, String> {
     let current = app.package_info().version.to_string();
-    let c = crate::probe::client(std::time::Duration::from_secs(12))?;
-    let (list, source) = match from_api(&c).await {
-        Ok(l) if !l.is_empty() => (l, "api"),
-        api => {
-            let why = api.err().unwrap_or_else(|| "لیست خالی".into());
-            match from_atom(&c).await {
-                Ok(l) => (l, "atom"),
-                Err(e) => {
-                    crate::applog::warn("update", format!("بررسی نسخه‌ی جدید نشد: {why} · {e}"));
-                    return Err(format!("{why} · {e}"));
-                }
-            }
+    let c = crate::probe::client(std::time::Duration::from_secs(15))?;
+    // both sources at once: on filtered lines one of them often answers while the other hangs
+    let (api, atom) = tokio::join!(from_api(&c), from_atom(&c));
+    let (list, source) = match (api, atom) {
+        (Ok(l), _) if !l.is_empty() => (l, "api"),
+        (_, Ok(l)) => (l, "atom"),
+        (a, Err(e)) => {
+            let why = a.err().unwrap_or_else(|| "لیست خالی".into());
+            crate::applog::warn("update", format!("بررسی نسخه‌ی جدید نشد (فقط بررسی، آپدیت خودکاری در کار نیست): {why} · {e}"));
+            return Err(friendly(&format!("{why} · {e}")));
         }
     };
     // highest version wins, not the newest date: a hotfix for an older line must not look like an update
-    let best = list.into_iter().max_by(|a, b| ver_num(&a.tag).cmp(&ver_num(&b.tag)));
+    let mut best = list.iter().max_by(|a, b| ver_num(&a.tag).cmp(&ver_num(&b.tag))).map(|r| Rel { tag: r.tag.clone(), url: r.url.clone(), prerelease: r.prerelease });
+    let mine = list.iter().find(|r| ver_num(&r.tag) == ver_num(&current)).map(|r| (r.tag.clone(), r.prerelease));
+    let current_channel = match &mine {
+        Some((_, Some(p))) => Some(chan(*p)),
+        Some((tag, None)) => page_prerelease(&c, tag).await.map(chan),
+        None => None,
+    };
+    if let Some(b) = best.as_mut() {
+        if b.prerelease.is_none() {
+            b.prerelease = if mine.as_ref().map(|m| ver_num(&m.0)) == Some(ver_num(&b.tag)) {
+                current_channel.map(|c| c == "beta")
+            } else {
+                page_prerelease(&c, &b.tag).await
+            };
+        }
+    }
     let newer = best.as_ref().map(|b| is_newer(&b.tag, &current)).unwrap_or(false);
     if newer {
         if let Some(b) = &best {
-            crate::applog::info("update", format!("نسخه‌ی جدید: {} (الان {current}) · منبع: {source}", b.tag));
+            crate::applog::info("update", format!("نسخه‌ی جدید منتشر شده: {} (الان {current}) · منبع: {source}", b.tag));
         }
     }
     Ok(UpdateInfo {
         current,
         url: best.as_ref().map(|b| b.url.clone()).filter(|u| !u.is_empty()).unwrap_or_else(|| format!("https://github.com/{REPO}/releases")),
-        prerelease: best.as_ref().map(|b| b.prerelease).unwrap_or(false),
+        prerelease: best.as_ref().and_then(|b| b.prerelease).unwrap_or(false),
         latest: best.map(|b| b.tag),
         newer,
+        current_channel,
         source,
     })
 }

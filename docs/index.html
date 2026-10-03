@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PacketYellow</title>
-<meta name="description" content="PacketYellow: جعبه‌ابزار شبکه برای اینترنت ایران. پینگ زنده، ۲۶۶ بازی با پایش زنده، تست فیلترینگ سایت‌ها، DNS، تست سرعت کم‌مصرف و کلاینت VPN با هسته‌ی Xray. رایگان و متن‌باز.">
+<meta name="description" content="PacketYellow: جعبه‌ابزار شبکه برای اینترنت ایران. پینگ زنده، ۲۶۶ بازی با پایش زنده، تست فیلترینگ سایت‌ها، DNS، تست سرعت کم‌مصرف، کلاینت VPN با هسته‌ی Xray و منوی کنار ساعت برای اتصال یه‌کلیکی. رایگان و متن‌باز.">
 <meta property="og:title" content="PacketYellow">
 <meta property="og:description" content="پکتات کجا رفتن؟ ما دقیق بهت میگیم.">
 <meta name="theme-color" content="#f2d21c">
@@ -342,6 +342,58 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
   .gh .lbl{display:none}
   .win-bar .pills .pill:not(.vpn){display:none}
 }
+
+/* ---------- tray (since 0.5.3) ---------- */
+.tray-grid{display:grid;grid-template-columns:1fr 360px;gap:56px;align-items:center;margin-top:8px}
+.tray-stage{position:relative;display:grid;justify-items:center;gap:14px}
+.tm{width:320px;background:#16160f;border:1px solid var(--line);border-radius:18px;padding:10px;display:grid;gap:8px;font-size:.82rem;text-align:right}
+.tm-head{display:flex;align-items:center;gap:8px;height:34px;padding-inline:4px}
+.tm-head img{width:22px;height:22px}.tm-head b{font-weight:900;direction:ltr}.tm-head b span{color:var(--y)}
+.tm-head .v{font:600 .7rem var(--mono);color:var(--t3);background:var(--d3);border-radius:6px;padding:1px 6px}
+.tm-head .chan{font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:9px;background:var(--good-bg);color:var(--good)}
+.tm-hero{background:var(--d0);border:1px solid var(--line);border-radius:12px;padding:14px;display:grid;gap:10px;position:relative;overflow:hidden;transition:border-color .3s}
+.tm-hero::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,var(--st-bg,#14203a),transparent 60%);transition:background .4s}
+.tm-hero>*{position:relative}
+.tm-top{display:flex;align-items:center;gap:12px}
+.tm-ring{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--st-bg,#14203a);color:var(--st,#7fa7ff);position:relative;flex:none;transition:.3s}
+.tm-ring::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid currentColor;opacity:.35}
+.tm.on .tm-ring::after{animation:tmPing 2.2s var(--ease) infinite}
+.tm.busy .tm-ring::after{opacity:1;border-color:currentColor transparent;animation:tmSpin .9s linear infinite}
+@keyframes tmPing{0%{transform:scale(.92);opacity:.6}80%,100%{transform:scale(1.25);opacity:0}}
+@keyframes tmSpin{to{transform:rotate(360deg)}}
+.tm.on{--st:var(--good);--st-bg:var(--good-bg)}.tm.busy{--st:var(--warn);--st-bg:var(--warn-bg)}
+.tm.on .tm-hero{border-color:#1f4a31}
+.tm-ttl{font-weight:900;font-size:1rem;color:var(--st,#7fa7ff);transition:color .3s}
+.tm-sub{color:var(--t2);font-size:.75rem}
+.tm-chips{display:flex;flex-wrap:wrap;gap:6px;min-height:24px}
+.tm-chip{height:24px;padding:0 9px;border-radius:12px;background:var(--d3);color:var(--t2);font-size:.72rem;display:inline-flex;align-items:center;gap:5px}
+.tm-sp{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tm-sp div{background:var(--d1);border:1px solid var(--line);border-radius:10px;padding:7px 10px}
+.tm-sp small{display:block;font-size:.68rem;color:var(--t3)}
+.tm-sp b{font:700 .85rem var(--mono);direction:ltr;display:block;text-align:right}
+.tm-sp svg{width:100%;height:24px;display:block;margin-top:2px}
+.tm-go{height:44px;border-radius:12px;border:0;font:900 .95rem inherit;font-family:inherit;background:var(--y);color:var(--ink);cursor:pointer;transition:transform .12s var(--ease),background .2s,color .2s}
+.tm-go:active{transform:scale(.98)}
+.tm.on .tm-go{background:var(--bad-bg);color:var(--bad);box-shadow:inset 0 0 0 1px #6b2a2c}
+.tm.busy .tm-go{background:var(--warn-bg);color:var(--warn);cursor:progress}
+.tm-tools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tm-tools span{height:56px;border-radius:11px;background:var(--d3);display:grid;place-items:center;align-content:center;gap:3px;color:var(--t2);font-size:.7rem;transition:.15s}
+.tm-tools span:hover{background:#2b270a;color:var(--y)}
+.tm-tools i{font-style:normal;font-size:1rem}
+.tm-row{height:34px;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 10px;color:var(--t2)}
+.tm-row small{margin-inline-start:auto;color:var(--t3);font-size:.68rem}
+.tm-row.q{color:var(--bad)}
+.tm-bar{display:flex;align-items:center;gap:10px;height:40px;padding:0 14px;border-radius:12px;background:var(--d2);border:1px solid var(--line);color:var(--t3);font:600 .75rem var(--mono);direction:ltr}
+.tm-bar .ic{width:18px;height:18px;border-radius:5px;background:#7fa7ff;transition:background .3s}
+.tm-bar .ic.on{background:var(--bad)}.tm-bar .ic.busy{background:var(--y)}
+.tm-bar .cur{margin-left:-6px;font-size:1rem}
+.tray-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:18px;color:var(--t2);font-size:.85rem}
+.tray-legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-left:6px;vertical-align:middle}
+@media (max-width:900px){.tray-grid{grid-template-columns:1fr;gap:32px}}
+.ch{display:inline-flex;height:20px;align-items:center;padding:0 8px;border-radius:10px;font-size:.7rem;font-weight:700;vertical-align:middle;margin-right:6px}
+.ch.s{background:var(--good-bg);color:var(--good)}.ch.b{background:var(--warn-bg);color:var(--warn)}
+.upd-note{display:flex;gap:10px;align-items:flex-start;background:var(--d2);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-top:22px;color:var(--t2);font-size:.9rem}
+.upd-note b{color:var(--t1)}
 </style>
 </head>
 <body>
@@ -352,6 +404,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
     <ul>
       <li><a href="#tools">ابزارها</a></li>
       <li><a href="#vpn">کلاینت VPN</a></li>
+      <li><a href="#tray">کنار ساعت</a></li>
       <li><a href="#auto">تشخیص خودکار</a></li>
       <li><a href="#sites">فیلترینگ</a></li>
       <li><a href="#download">دانلود</a></li>
@@ -369,7 +422,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
     <div>
       <span class="eyebrow"><i></i><span id="heroVer">PacketYellow</span> · open source</span>
       <h1>پکتات کجا رفتن؟<span>ما دقیق بهت میگیم. تا آخرین میلی‌ثانیه.</span></h1>
-      <p class="lead">پینگ زنده، ۲۶۶ بازی، تست فیلترینگ سایت‌ها، DNS و تست سرعت کم‌مصرف. حالا با کلاینت VPN روی هسته‌ی Xray، که فقط وقتی واقعاً وصلی میگه «متصل». برای اینترنت ایران ساخته شده، با هسته‌ی Rust.</p>
+      <p class="lead">پینگ زنده، ۲۶۶ بازی، تست فیلترینگ سایت‌ها، DNS و تست سرعت کم‌مصرف. حالا با کلاینت VPN روی هسته‌ی Xray، که فقط وقتی واقعاً وصلی میگه «متصل»، و یه منوی کنار ساعت که بدون باز کردن برنامه وصلت می‌کنه. برای اینترنت ایران ساخته شده، با هسته‌ی Rust.</p>
       <div class="cta">
         <a class="btn btn-ink" id="heroDl" href="https://github.com/Mehdi138iimm/PacketYellow/releases" target="_blank" rel="noopener">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>
@@ -414,6 +467,50 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
       <div class="stage" role="tabpanel" id="stage" aria-live="polite">
         <div class="stage-bar"><kbd id="stKey">1</kbd><b id="stName"></b><span class="prog" aria-hidden="true"><i id="stProg"></i></span></div>
         <div class="stage-body" id="stBody"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="tray">
+  <div class="wrap">
+    <span class="kicker rv">Tray mode · since 0.5.3</span>
+    <h2 class="rv">ببندیش هم، هست.</h2>
+    <p class="sub rv">دکمه‌ی ✕ دیگه برنامه رو نمی‌بنده: PacketYellow میره کنار ساعت ویندوز و VPN وصل می‌مونه. راست‌کلیک روی آیکونش یه منوی اختصاصی باز می‌کنه، نه اون منوی خاکستری ویندوز.</p>
+    <div class="tray-grid">
+      <div>
+        <ul class="feats">
+          <li class="rv"><b>✕ = کنار ساعت</b><span>بستن پنجره (یا Alt+F4) فقط مخفیش می‌کنه. بار اول یه نوتیفیکیشن میاد که بدونی کجا رفت. کلیک چپ روی آیکون دوباره بازش می‌کنه.</span></li>
+          <li class="rv"><b>رنگ آیکون</b><span>با یه نگاه می‌فهمی چه خبره: آبی یعنی وصل نیستی، زرد یعنی داره وصل میشه، قرمز یعنی VPN وصله. وصل و قطع شدن هم نوتیفیکیشن میده.</span></li>
+          <li class="rv"><b>اتصال یه‌کلیکی</b><span>راست‌کلیک ← «اتصال». به آخرین کانفیگت وصل میشه بدون اینکه پنجره باز بشه، و همون‌جا می‌بینی که داره تست واقعی از تونل می‌گیره.</span></li>
+          <li class="rv"><b>وضعیت زنده</b><span>اسم کانفیگ، زمان اتصال، پینگ، حالت (پروکسی / TUN / پورت)، لوکیشن خروجی و نمودار زنده‌ی دانلود و آپلود.</span></li>
+          <li class="rv"><b>میانبرها</b><span>داشبورد، تست سرعت، پینگ بازی و کانفیگ‌ها با یه کلیک. کپی آدرس پروکسی محلی هم هست.</span></li>
+          <li class="rv"><b>خروج کامل</b><span>از همین منو. اگه VPN وصل باشه یه بار تایید می‌گیره، بعد هسته‌ها بسته میشن و پروکسی ویندوز برمی‌گرده سر جاش. Esc یا کلیک بیرون منو رو می‌بنده.</span></li>
+        </ul>
+        <div class="tray-legend rv"><span><i style="background:#7fa7ff"></i>وصل نیست</span><span><i style="background:var(--y)"></i>در حال اتصال</span><span><i style="background:var(--bad)"></i>VPN وصله</span></div>
+      </div>
+      <div class="tray-stage rv" aria-label="نمای منوی کنار ساعت" role="img">
+        <div class="tm" id="tm">
+          <div class="tm-head"><img src="icon.svg" alt=""><b>Packet<span>Yellow</span></b><span class="v" id="tmVer">v0.5.3</span><span class="chan" id="tmChan">ریلیز</span></div>
+          <div class="tm-hero">
+            <div class="tm-top">
+              <div class="tm-ring"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z"/><path id="tmCk" d="m9 12 2 2 4-4" opacity="0"/></svg></div>
+              <div><div class="tm-ttl" id="tmTtl">VPN وصل نیست</div><div class="tm-sub">NL-Reality</div></div>
+            </div>
+            <div class="tm-chips" id="tmChips"><span class="tm-chip">با دکمه‌ی زیر وصل شو، بدون باز کردن برنامه</span></div>
+            <div class="tm-sp" id="tmSp" hidden>
+              <div><small>↓ دانلود</small><b id="tmDn">0 KB/s</b><svg viewBox="0 0 100 24" preserveAspectRatio="none"><polyline id="tmDnL" fill="none" stroke="var(--good)" stroke-width="1.6" points=""/></svg></div>
+              <div><small>↑ آپلود</small><b id="tmUp">0 KB/s</b><svg viewBox="0 0 100 24" preserveAspectRatio="none"><polyline id="tmUpL" fill="none" stroke="var(--y)" stroke-width="1.6" points=""/></svg></div>
+            </div>
+          </div>
+          <button class="tm-go" id="tmGo" type="button">⏻ اتصال</button>
+          <div class="tm-tools"><span><i>〽</i>داشبورد</span><span><i>◔</i>تست سرعت</span><span><i>🎮</i>پینگ بازی</span><span><i>☰</i>کانفیگ‌ها</span></div>
+          <div class="tm-row">▢ باز کردن PacketYellow<small>کلیک چپ روی آیکون</small></div>
+          <div class="tm-row" id="tmCopy" style="opacity:.4">⧉ کپی آدرس پروکسی<small class="mono" id="tmPort">--</small></div>
+          <div class="tm-row q">⇥ خروج کامل از برنامه</div>
+        </div>
+        <div class="tm-bar"><span>ENG</span><span class="ic" id="tmIc"></span><span class="cur">⬉</span><span style="margin-left:auto">01:02</span></div>
       </div>
     </div>
   </div>
@@ -518,7 +615,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
   <div class="wrap">
     <span class="kicker rv">Download · live from GitHub</span>
     <h2 class="rv">بگیرش. رایگانه.</h2>
-    <p class="sub rv">این بخش مستقیم از ریلیزهای گیت‌هاب خونده میشه؛ هر نسخه‌ای منتشر بشه همین‌جا میاد. برنامه هم خودش نسخه‌ی جدید رو خبر میده.</p>
+    <p class="sub rv">این بخش مستقیم از ریلیزهای گیت‌هاب خونده میشه؛ هر نسخه‌ای منتشر بشه همین‌جا میاد. هر نسخه یا <span class="ch s">ریلیز</span> (پایدار) هست یا <span class="ch b">بتا</span> (آزمایشی)؛ برنامه هم همین برچسب رو کنار شماره‌ی نسخه‌اش نشون میده.</p>
     <div class="dl-grid">
       <div>
         <div class="rel-head" id="relHead"><span class="num">…</span></div>
@@ -531,6 +628,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
           <div class="ver next">؟؟؟<span class="num"></span><span class="badge y">نسخه‌ی بعدی</span><small>به‌زودی</small></div>
           <div id="verList"><div class="skel"></div></div>
         </div>
+        <div class="upd-note rv"><span>🔔</span><span><b>فقط خبر میده، خودش آپدیت نمی‌کنه.</b> برنامه هر ۲ ساعت از گیت‌هاب می‌پرسه؛ اگه نسخه‌ی جدید باشه یه دکمه‌ی زرد بالا میاد که صفحه‌ی دانلود رو باز می‌کنه، اگه نه میگه «✓ آخرین نسخه رو داری». هیچ‌چیزی بی‌اجازه دانلود یا نصب نمیشه و از تنظیمات (کلید <kbd>0</kbd>) میشه خاموشش کرد.</span></div>
       </div>
     </div>
   </div>
@@ -548,6 +646,9 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
     <details class="rv"><summary>حالت TUN دسترسی ادمین می‌خواد؟</summary><p>آره، ساختن آداپتور TUN بدون ادمین ممکن نیست. بقیه‌ی برنامه (و حالت‌های پروکسی سیستم و فقط پورت) بدون ادمین کار می‌کنه. اگه بدون ادمین TUN رو بزنی، خود برنامه یه دکمه میده که با ادمین دوباره باز بشه؛ از تنظیمات (کلید <kbd>0</kbd>) هم میشه.</p></details>
     <details class="rv"><summary>بعد از بستن VPN اینترنتم قطع شده!</summary><p>احتمالاً یه پروکسی جامانده روی ویندوز مونده. برو تنظیمات (کلید <kbd>0</kbd>) و «اینترنتم قطع شده» رو بزن؛ پروکسی ویندوز خاموش میشه. «بستن هسته‌های جامانده» هم xray یا sing-box باز مونده رو می‌بنده.</p></details>
     <details class="rv"><summary>اطلاعاتم جایی فرستاده میشه؟</summary><p>نه. همه‌ی تست‌ها روی کامپیوتر خودت اجرا میشن و هیچ سروری مال PacketYellow نیست. فقط برای پیدا کردن IP و موقعیت، از سرویس‌های عمومی مثل Cloudflare و ip-api سؤال می‌کنه. کانفیگ‌ها و ساب‌هات هم فقط روی سیستم خودت ذخیره میشن و از تنظیمات می‌تونی ازشون فایل پشتیبان JSON بگیری.</p></details>
+    <details class="rv"><summary>✕ رو زدم ولی برنامه هنوز روشنه!</summary><p>از نسخه‌ی 0.5.3 عمداً این‌طوریه تا VPN با بستن پنجره قطع نشه. برنامه رفته کنار ساعت ویندوز (اگه نمی‌بینیش، روی فلش ^ کنار ساعت بزن). کلیک چپ روی آیکونش برنامه رو باز می‌کنه و راست‌کلیک ← «خروج کامل از برنامه» کامل می‌بندتش.</p></details>
+    <details class="rv"><summary>برنامه خودش آپدیت میشه؟</summary><p>نه. فقط خبر میده. هر ۲ ساعت ریلیزهای گیت‌هاب رو چک می‌کنه و اگه نسخه‌ی جدید باشه یه دکمه نشونت میده که صفحه‌ی دانلود رو باز می‌کنه؛ اگه آخرین نسخه رو داشته باشی همینو میگه. اگه گیت‌هاب روی اینترنتت فیلتر یا کُند باشه، بی‌صدا چند دقیقه بعد دوباره امتحان می‌کنه.</p></details>
+    <details class="rv"><summary>فرق «ریلیز» و «بتا» چیه؟</summary><p><span class="ch s">ریلیز</span> نسخه‌ی پایداره و برای همه پیشنهاد میشه. <span class="ch b">بتا</span> یعنی آزمایشی (Pre-release در گیت‌هاب): قابلیت‌های جدید زودتر میان ولی ممکنه باگ داشته باشه. برنامه این برچسب رو مستقیم از گیت‌هاب می‌خونه و کنار شماره‌ی نسخه نشون میده.</p></details>
     <details class="rv"><summary>باگ پیدا کردم.</summary><p>تو برنامه برو بخش «لاگ» (کلید <kbd>9</kbd>)، «کپی همه» رو بزن و توی <a href="https://github.com/Mehdi138iimm/PacketYellow/issues" target="_blank" rel="noopener">Issues گیت‌هاب</a> بفرست.</p></details>
   </div>
 </section>
@@ -572,7 +673,7 @@ footer{background:var(--y);color:var(--ink);padding:72px 0 36px}
 <script>
 const REPO = 'Mehdi138iimm/PacketYellow';
 const REPO_URL = 'https://github.com/' + REPO;
-let LATEST = '';  // filled from the latest GitHub release
+let LATEST = '', LATEST_PRE = false;  // filled from the latest GitHub release
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const q = ms => ms == null ? 'bad' : ms < 60 ? 'good' : ms < 120 ? 'warn' : 'bad';
@@ -657,8 +758,8 @@ const TOOLS = [
     </div>` },
   { n: 'لاگ', d: 'هر خطا با ساعت دقیق، آماده‌ی گزارش باگ', b: () => `
     ${[['03:12:04.118', 'info', 'app', `PacketYellow ${LATEST || 'v0.5'} شروع شد · windows x86_64`], ['03:12:04.530', 'warn', 'vpn', 'هسته‌ی جامانده (xray.exe) بسته شد'], ['03:12:09.311', 'info', 'vpn', 'PAC برنامه‌ی دیگه موقتاً برداشته شد'], ['03:12:11.027', 'error', 'vpn', 'TUN: دسترسی ادمین نیست (NEED_ADMIN)'], ['03:12:40.640', 'info', 'vpn', 'متصل · تست واقعی تونل 212ms']].map(([t, l, s, m]) => `<div class="lrow ${l[0]}"><span class="lt mono">${t}</span><span class="ll">${{ info: 'اطلاعات', warn: 'هشدار', error: 'خطا' }[l]}</span><span>${m}</span></div>`).join('')}` },
-  { n: 'تنظیمات', d: 'نسخه و آپدیت، ادمین، پشتیبان‌گیری و ابزار نجات', b: () => `
-    ${[['نسخه‌ی برنامه', `<span class="mono">${esc((LATEST || 'v0.5').replace(/^v/, ''))}</span> <span class="badge g">آخرین نسخه</span>`], ['بررسی خودکار آپدیت', '<span class="badge g">روشن</span>'], ['صفحه‌ی شروع', 'داشبورد زنده · خودکار'], ['دسترسی ادمین', '<span class="badge r">نه</span> · باز کردن دوباره با ادمین'], ['هسته‌ها', '<span class="mono">Xray · sing-box</span> <span class="badge g">نصب شده</span>'], ['پشتیبان‌گیری', 'کانفیگ‌ها، ساب‌ها، سایت‌ها و بازی‌ها · JSON']].map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('')}
+  { n: 'تنظیمات', d: 'نسخه (ریلیز / بتا)، خبر آپدیت، ادمین، پشتیبان‌گیری', b: () => `
+    ${[['نسخه‌ی برنامه', `<span class="mono">${esc((LATEST || 'v0.5.3').replace(/^v/, ''))}</span> ${LATEST_PRE ? '<span class="badge" style="background:var(--warn-bg);color:var(--warn)">بتا</span>' : '<span class="badge g">ریلیز</span>'}`], ['آخرین نسخه', '<span class="badge g">✓ آخرین نسخه رو داری</span>'], ['خبر دادن نسخه‌ی جدید', '<span class="badge g">روشن</span> · فقط خبر، بدون آپدیت خودکار'], ['صفحه‌ی شروع', 'داشبورد زنده · خودکار'], ['دسترسی ادمین', '<span class="badge r">نه</span> · باز کردن دوباره با ادمین'], ['هسته‌ها', '<span class="mono">Xray · sing-box</span> <span class="badge g">نصب شده</span>'], ['پشتیبان‌گیری', 'کانفیگ‌ها، ساب‌ها، سایت‌ها و بازی‌ها · JSON']].map(([k, v]) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`).join('')}
     <p class="note">«اینترنتم قطع شده» پروکسی جامانده‌ی ویندوز رو خاموش می‌کنه؛ «بستن هسته‌های جامانده» هم xray و sing-box باز مونده رو می‌بنده.</p>` },
 ];
 let tCur = 0, tAuto = !reduce, tTimer = 0;
@@ -700,6 +801,47 @@ $('vpnSw').addEventListener('change', e => {
   $('mSegA').textContent = vpnOn ? 'خودکار · HTTP' : 'خودکار';
   S.splice(0, S.length - 12);
 });
+
+
+/* ---------- tray popup demo ---------- */
+(() => {
+  const tm = $('tm'); if (!tm) return;
+  let st = 'off', t0 = 0, timer = 0, auto = !reduce, autoT = 0;
+  const dn = Array(30).fill(0), up = Array(30).fill(0);
+  const line = a => { const m = Math.max(50, ...a); return a.map((v, i) => `${(100 - i * 100 / (a.length - 1)).toFixed(1)},${(22 - v / m * 20).toFixed(1)}`).join(' '); };
+  const kb = v => v > 1024 ? (v / 1024).toFixed(2) + ' MB/s' : v.toFixed(1) + ' KB/s';
+  const dur = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+  function render() {
+    tm.className = 'tm ' + st; $('tmIc').className = 'ic ' + st;
+    $('tmTtl').textContent = st === 'on' ? 'وصلی و امنی' : st === 'busy' ? 'در حال اتصال...' : 'VPN وصل نیست';
+    $('tmCk').setAttribute('opacity', st === 'on' ? 1 : 0);
+    $('tmGo').textContent = st === 'on' ? '⏻ قطع اتصال' : st === 'busy' ? '◌ در حال اتصال...' : '⏻ اتصال';
+    $('tmSp').hidden = st !== 'on';
+    $('tmCopy').style.opacity = st === 'on' ? 1 : .4; $('tmPort').textContent = st === 'on' ? '127.0.0.1:2080' : '--';
+    $('tmChips').innerHTML = st === 'on' ? `<span class="tm-chip">⏱ <span class="mono" id="tmDur">${dur(Date.now() - t0)}</span></span><span class="tm-chip">⚡ <span class="mono">212 ms</span></span><span class="tm-chip">پروکسی سیستم</span><span class="tm-chip mono">NL</span>`
+      : st === 'busy' ? '<span class="tm-chip">◌ تست اتصال واقعی از داخل تونل</span>' : '<span class="tm-chip">با دکمه‌ی زیر وصل شو، بدون باز کردن برنامه</span>';
+  }
+  function tick() {
+    if (st !== 'on') return;
+    const d = Math.max(0, (dn[0] || 400) * .6 + Math.random() * 900 - 200 + (Math.random() < .15 ? 2500 : 0)), u = Math.max(0, d * (.08 + Math.random() * .1));
+    dn.unshift(d); dn.pop(); up.unshift(u); up.pop();
+    $('tmDn').textContent = kb(d); $('tmUp').textContent = kb(u);
+    $('tmDnL').setAttribute('points', line(dn)); $('tmUpL').setAttribute('points', line(up));
+    const e = $('tmDur'); if (e) e.textContent = dur(Date.now() - t0);
+  }
+  function toggle() {
+    clearTimeout(timer);
+    if (st === 'off') { st = 'busy'; render(); timer = setTimeout(() => { st = 'on'; t0 = Date.now(); render(); tick(); }, 1600); }
+    else if (st === 'on') { st = 'off'; dn.fill(0); up.fill(0); render(); }
+  }
+  $('tmGo').addEventListener('click', () => { auto = false; clearTimeout(autoT); toggle(); });
+  render(); setInterval(tick, 1000);
+  const loop = () => { if (!auto) return; toggle(); autoT = setTimeout(loop, st === 'busy' ? 7000 : 4000); };
+  if (auto && 'IntersectionObserver' in window) {
+    let started = false;
+    new IntersectionObserver(([en]) => { if (en.isIntersecting && !started) { started = true; autoT = setTimeout(loop, 900); } }, { threshold: .4 }).observe(tm);
+  }
+})();
 
 /* ---------- browser ping (honest: fetch timing, not ICMP) ---------- */
 const PROBE_URLS = [
@@ -761,7 +903,7 @@ function mdLite(s) {
 }
 const dlIcon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></svg>';
 const KNOWN = ['v0.3.2', 'v0.3.1'];
-const verRow = (tag, href, sub, pre) => `<a class="ver" href="${esc(href)}" target="_blank" rel="noopener"><span class="num">${esc(tag)}</span>${pre ? '<span class="badge">پیش‌نمایش</span>' : ''}<small>${sub}</small></a>`;
+const verRow = (tag, href, sub, pre) => `<a class="ver" href="${esc(href)}" target="_blank" rel="noopener"><span class="num">${esc(tag)}</span>${pre ? '<span class="ch b">بتا</span>' : '<span class="ch s">ریلیز</span>'}<small>${sub}</small></a>`;
 function noRelease(msg) {
   $('relHead').innerHTML = '<span class="num">' + KNOWN[0] + '</span>';
   $('assets').innerHTML = `<div class="dl-empty"><b>${msg}</b>فایل‌ها رو مستقیم از صفحه‌ی ریلیزهای گیت‌هاب بگیر.<div style="margin-top:14px"><a class="btn btn-y" href="${REPO_URL}/releases" target="_blank" rel="noopener">صفحه‌ی ریلیزها</a></div></div>`;
@@ -780,8 +922,9 @@ async function gh() {
   const rel = list[0];
   const tag = rel.tag_name || rel.name || '';
   const total = (rel.assets || []).reduce((a, x) => a + (x.download_count || 0), 0);
-  $('relHead').innerHTML = `<span class="num">${esc(tag)}</span>${rel.prerelease ? '<span class="beta">بتا · pre-release</span>' : ''}<span>${esc(fdate(rel.published_at))}${total ? ` · ${fa(total)} دانلود` : ''}</span>`;
-  $('heroDlVer').textContent = tag; LATEST = tag;
+  $('relHead').innerHTML = `<span class="num">${esc(tag)}</span>${rel.prerelease ? '<span class="ch b">بتا · آزمایشی</span>' : '<span class="ch s">ریلیز · پایدار</span>'}<span>${esc(fdate(rel.published_at))}${total ? ` · ${fa(total)} دانلود` : ''}</span>`;
+  $('heroDlVer').textContent = tag + (rel.prerelease ? ' · بتا' : ''); LATEST = tag; LATEST_PRE = !!rel.prerelease;
+  $('tmVer').textContent = tag; $('tmChan').textContent = rel.prerelease ? 'بتا' : 'ریلیز'; $('tmChan').style.cssText = rel.prerelease ? 'background:var(--warn-bg);color:var(--warn)' : '';
   if (tCur >= 8) showTool(tCur);
   const rank = n => /\.exe$/i.test(n) ? 0 : /\.msi$/i.test(n) ? 1 : 2;
   const assets = (rel.assets || []).filter(a => !/\.(sig|blockmap|json)$/i.test(a.name)).sort((a, b) => rank(a.name) - rank(b.name));

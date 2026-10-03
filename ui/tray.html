@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>PacketYellow</title>
+<link rel="stylesheet" href="vendor/fonts.css" onerror="this.remove()">
+<style>
+/* PacketYellow tray popup (320 x 520). Same palette as style.css, no glow/shadows. */
+:root{
+  --y: oklch(0.9 0.18 102); --y-bg: oklch(0.27 0.045 102); --y-line: oklch(0.42 0.08 102);
+  --b0: oklch(0.14 0.008 100); --b1: oklch(0.175 0.008 100); --b2: oklch(0.21 0.009 100); --b3: oklch(0.25 0.01 100);
+  --line: oklch(0.28 0.01 100); --t1: oklch(0.95 0.008 100); --t2: oklch(0.74 0.012 100); --t3: oklch(0.6 0.012 100);
+  --good: oklch(0.78 0.16 155); --good-bg: oklch(0.26 0.05 155); --warn: oklch(0.8 0.14 70); --warn-bg: oklch(0.27 0.05 70);
+  --bad: oklch(0.68 0.19 22); --bad-bg: oklch(0.26 0.06 22); --off: oklch(0.7 0.12 250); --off-bg: oklch(0.25 0.04 250);
+  --mono: "JetBrains Mono", ui-monospace, monospace; --ease: cubic-bezier(0.16,1,0.3,1);
+  --st: var(--off); --st-bg: var(--off-bg);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+[hidden]{display:none!important}
+html,body{height:100%;background:transparent;overflow:hidden}
+body{font:400 13px/1.55 Vazirmatn,Tahoma,"Segoe UI",system-ui,sans-serif;color:var(--t1);user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
+:focus-visible{outline:2px solid var(--y);outline-offset:2px;border-radius:8px}
+
+body[data-s=on]{--st:var(--good);--st-bg:var(--good-bg)}
+body[data-s=busy]{--st:var(--warn);--st-bg:var(--warn-bg)}
+
+.card{height:100vh;display:flex;flex-direction:column;gap:8px;padding:10px;background:var(--b1);border:1px solid var(--line);border-radius:16px;overflow:hidden;position:relative}
+.card.pop{animation:pop .32s var(--ease)}
+@keyframes pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.card.pop > :not(.toast){animation:rise .42s var(--ease) both}
+.card.pop > *:nth-child(2){animation-delay:.03s}.card.pop > *:nth-child(3){animation-delay:.06s}
+.card.pop > *:nth-child(4){animation-delay:.09s}.card.pop > *:nth-child(5){animation-delay:.12s}.card.pop > *:nth-child(6){animation-delay:.15s}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* header */
+.head,.go,.tools,.rows{flex:none}
+.head{display:flex;align-items:center;gap:9px;height:36px;padding-inline:4px 0}
+.head img{width:24px;height:24px;border-radius:7px}
+.head b{font-weight:800;font-size:15px;direction:ltr}.head b span{color:var(--y)}
+.ver{font:500 11px var(--mono);color:var(--t3);background:var(--b2);border-radius:6px;padding:1px 6px}
+.head .grow{flex:1}
+.ib{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;color:var(--t3);transition:background .15s,color .15s}
+.ib:hover{background:var(--b2);color:var(--t1)}
+
+/* status hero */
+.hero{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:12px;background:var(--b0);border:1px solid var(--line);position:relative;overflow:hidden;transition:border-color .3s}
+body[data-s=on] .hero{border-color:color-mix(in oklch,var(--good) 35%,var(--line))}
+.hero::before{content:"";position:absolute;inset:0;background:radial-gradient(120% 90% at 100% 0%,var(--st-bg),transparent 60%);opacity:.9;transition:background .4s}
+.hero > *{position:relative}
+.top{display:flex;align-items:center;gap:12px}
+.ring{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:var(--st);background:var(--st-bg);position:relative;flex:none;transition:color .3s,background .3s}
+.ring svg{width:24px;height:24px}
+.ring::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--st);opacity:.35}
+body[data-s=on] .ring::after{animation:ping 2.2s var(--ease) infinite}
+body[data-s=busy] .ring::after{opacity:1;border-color:var(--st) transparent var(--st) transparent;animation:spin .9s linear infinite}
+@keyframes ping{0%{transform:scale(.92);opacity:.6}80%,100%{transform:scale(1.25);opacity:0}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.txt{min-width:0;flex:1}
+.ttl{font-weight:800;font-size:16px;color:var(--st);transition:color .3s}
+.sub{color:var(--t2);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips:empty{display:none}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:12px;background:var(--b2);color:var(--t2);font-size:12px}
+.chip svg{width:13px;height:13px;color:var(--t3)}
+.speed{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.sp{display:flex;flex-direction:column;gap:0;padding:8px 10px;border-radius:10px;background:var(--b1);border:1px solid var(--line)}
+.sp small{font-size:11px;color:var(--t3);display:flex;align-items:center;gap:4px}
+.sp small svg{width:12px;height:12px}
+.sp .num{font-size:14px;font-weight:700;text-align:right}
+.sp.dn small svg{color:var(--good)}.sp.up small svg{color:var(--y)}
+canvas{width:100%;height:30px;display:block}
+.idle{margin-top:auto;color:var(--t3);font-size:12px;display:flex;gap:6px;align-items:flex-start}
+.idle svg{width:14px;height:14px;margin-top:2px}
+
+/* main button */
+.go{height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:9px;font-weight:800;font-size:15px;background:var(--y);color:var(--b0);transition:transform .12s var(--ease),background .2s,color .2s,filter .15s;position:relative;overflow:hidden}
+.go:hover{filter:brightness(1.06)}.go:active{transform:scale(.98)}
+.go svg{width:18px;height:18px}
+body[data-s=on] .go{background:var(--bad-bg);color:var(--bad);border:1px solid color-mix(in oklch,var(--bad) 45%,transparent)}
+body[data-s=busy] .go{background:var(--warn-bg);color:var(--warn);cursor:progress}
+body[data-s=busy] .go::after{content:"";position:absolute;inset:auto 0 0 0;height:3px;background:linear-gradient(90deg,transparent,var(--warn),transparent);animation:bar 1.1s linear infinite}
+@keyframes bar{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+
+/* quick tools */
+.tools{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.tool{height:62px;border-radius:11px;background:var(--b2);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--t2);font-size:11.5px;border:1px solid transparent;transition:background .15s,color .15s,border-color .15s,transform .12s var(--ease)}
+.tool svg{width:19px;height:19px;color:var(--t3);transition:color .15s,transform .2s var(--ease)}
+.tool:hover{background:var(--y-bg);border-color:var(--y-line);color:var(--y)}
+.tool:hover svg{color:var(--y);transform:translateY(-2px)}
+.tool:active{transform:scale(.96)}
+
+/* rows */
+.rows{display:flex;flex-direction:column;gap:2px}
+.row{height:36px;border-radius:9px;display:flex;align-items:center;gap:10px;padding:0 10px;color:var(--t2);text-align:right;transition:background .15s,color .15s}
+.row svg{color:var(--t3)}
+.row:hover:not(:disabled){background:var(--b2);color:var(--t1)}
+.row:hover:not(:disabled) svg{color:var(--t1)}
+.row:disabled{opacity:.4;cursor:default}
+.row .k{margin-inline-start:auto;font-size:11px;color:var(--t3)}
+.row .k.num{font-size:11.5px}
+.row.quit{color:var(--bad)}.row.quit svg{color:var(--bad)}
+.row.quit:hover{background:var(--bad-bg)!important;color:var(--bad)!important}
+.row.quit:hover svg{color:var(--bad)!important}
+.row.quit.ask{background:var(--bad);color:var(--b0)!important}.row.quit.ask svg{color:var(--b0)!important}
+.row.quit.ask .k{color:var(--b0)}
+.hr{height:1px;background:var(--line);margin:2px 6px}
+
+.toast{pointer-events:none;visibility:hidden;position:absolute;inset-inline:16px;bottom:14px;padding:8px 12px;border-radius:10px;background:var(--t1);color:var(--b0);font-weight:700;font-size:12px;text-align:center;transform:translateY(60px);opacity:0;transition:transform .3s var(--ease),opacity .3s}
+.toast.show{transform:none;opacity:1;visibility:visible}
+</style>
+</head>
+<body data-s="off">
+<svg hidden xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-power" viewBox="0 0 24 24"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></symbol>
+  <symbol id="i-loader" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-6.22-8.56"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+  <symbol id="i-gauge" viewBox="0 0 24 24"><path d="m12 14 4-4"/><path d="M3.34 19a10 10 0 1 1 17.32 0"/></symbol>
+  <symbol id="i-game" viewBox="0 0 24 24"><line x1="6" x2="10" y1="11" y2="11"/><line x1="8" x2="8" y1="9" y2="13"/><line x1="15" x2="15.01" y1="12" y2="12"/><line x1="18" x2="18.01" y1="10" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M3 12h.01"/><path d="M3 18h.01"/><path d="M3 6h.01"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M8 6h13"/></symbol>
+  <symbol id="i-window" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  <symbol id="i-scroll" viewBox="0 0 24 24"><path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+</svg>
+
+<div class="card" id="card">
+  <header class="head">
+    <img src="icon.svg" alt="">
+    <b>Packet<span>Yellow</span></b>
+    <span class="ver num" id="ver">v0.5.3</span>
+    <span class="grow"></span>
+    <button class="ib" data-a="show" title="باز کردن برنامه"><svg><use href="#i-window"/></svg></button>
+    <button class="ib" data-a="hide" title="بستن این منو (Esc)"><svg><use href="#i-x"/></svg></button>
+  </header>
+
+  <section class="hero">
+    <div class="top">
+      <div class="ring"><svg id="ringIc"><use href="#i-shield"/></svg></div>
+      <div class="txt">
+        <div class="ttl" id="ttl">VPN وصل نیست</div>
+        <div class="sub" id="sub">کانفیگی انتخاب نشده</div>
+      </div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="speed" id="speed" hidden>
+      <div class="sp dn"><small><svg><use href="#i-down"/></svg>دانلود</small><span class="num" id="dn">0 B/s</span><canvas id="cDn"></canvas></div>
+      <div class="sp up"><small><svg><use href="#i-up"/></svg>آپلود</small><span class="num" id="up">0 B/s</span><canvas id="cUp"></canvas></div>
+    </div>
+    <div class="idle" id="idle"><svg><use href="#i-info"/></svg><span id="idleTxt">با دکمه‌ی زیر به آخرین کانفیگت وصل شو، بدون اینکه برنامه رو باز کنی.</span></div>
+  </section>
+
+  <button class="go" id="go" data-a="toggle"><svg id="goIc"><use href="#i-power"/></svg><span id="goTxt">اتصال</span></button>
+
+  <nav class="tools">
+    <button class="tool" data-a="goto:dash"><svg><use href="#i-activity"/></svg>داشبورد</button>
+    <button class="tool" data-a="goto:speed"><svg><use href="#i-gauge"/></svg>تست سرعت</button>
+    <button class="tool" data-a="goto:games"><svg><use href="#i-game"/></svg>پینگ بازی</button>
+    <button class="tool" data-a="goto:tunnel"><svg><use href="#i-list"/></svg>کانفیگ‌ها</button>
+  </nav>
+
+  <div class="rows">
+    <button class="row" data-a="show"><svg><use href="#i-window"/></svg>باز کردن PacketYellow<span class="k">کلیک چپ روی آیکون</span></button>
+    <button class="row" id="copy" data-a="copy" disabled><svg><use href="#i-copy"/></svg>کپی آدرس پروکسی<span class="k num" id="copyK">--</span></button>
+    <div class="hr"></div>
+    <button class="row quit" id="quit" data-a="quit"><svg><use href="#i-logout"/></svg><span id="quitTxt">خروج کامل از برنامه</span><span class="k" id="quitK"></span></button>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const T = window.__TAURI__, IN_APP = !!(T && T.core);
+const $ = id => document.getElementById(id);
+const invoke = (c, a) => IN_APP ? T.core.invoke(c, a) : Promise.reject('not in app');
+const listen = (e, cb) => IN_APP ? T.event.listen(e, cb) : Promise.resolve();
+const act = a => invoke('tray_action', { action: a }).catch(() => {});
+const ls = (k, d) => { try { return JSON.parse(localStorage.getItem('py:' + k)) ?? d; } catch { return d; } };
+const MODE = { tun: 'TUN', local: 'فقط پورت' };
+const fmtRate = b => b < 1024 ? b + ' B/s' : b < 1048576 ? (b / 1024).toFixed(1) + ' KB/s' : (b / 1048576).toFixed(2) + ' MB/s';
+const fmtDur = ms => { const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s % 60).padStart(2, '0'); };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+let st = 'off', status = null, check = null, quitArm = 0;
+const hist = { dn: Array(40).fill(0), up: Array(40).fill(0) };
+
+function selectedName() {
+  const sel = ls('vpnSel', null), p = ls('vpnProfiles', []).find(x => x.id === sel);
+  return p ? p.name || p.host : null;
+}
+
+function chip(icon, html) { return `<span class="chip"><svg><use href="#i-${icon}"/></svg>${html}</span>`; }
+
+function render() {
+  document.body.dataset.s = st;
+  const name = status?.name || selectedName();
+  $('ringIc').innerHTML = `<use href="#i-${st === 'on' ? 'shield-check' : 'shield'}"/>`;
+  $('ttl').textContent = st === 'on' ? 'وصلی و امنی' : st === 'busy' ? 'در حال اتصال...' : 'VPN وصل نیست';
+  $('sub').textContent = name ? name : 'کانفیگی انتخاب نشده';
+  $('sub').title = name || '';
+  let chips = '';
+  if (st === 'on' && status) {
+    chips += chip('clock', `<span class="num" id="dur">${fmtDur(Date.now() - status.since)}</span>`);
+    const d = check?.delayMs ?? status.delayMs;
+    if (d != null) chips += chip('zap', `<span class="num">${d} ms</span>`);
+    chips += chip('shield', esc(MODE[status.mode] || 'پروکسی سیستم'));
+    if (check?.loc || check?.ip) chips += chip('globe', `<span class="num">${esc(check.loc || check.ip)}</span>`);
+  } else if (st === 'busy') {
+    chips += chip('loader', 'تست اتصال واقعی از داخل تونل');
+  }
+  $('chips').innerHTML = chips;
+  $('speed').hidden = st !== 'on';
+  $('idle').hidden = st === 'on';
+  $('idleTxt').textContent = st === 'busy' ? 'یه لحظه صبر کن، داریم مطمئن می‌شیم واقعاً اینترنت از تونل رد می‌شه.'
+    : name ? 'با دکمه‌ی زیر به همین کانفیگ وصل شو، بدون اینکه برنامه رو باز کنی.' : 'هنوز کانفیگی انتخاب نکردی. «کانفیگ‌ها» رو بزن و یکی اضافه کن.';
+  $('goIc').innerHTML = `<use href="#i-${st === 'busy' ? 'loader' : 'power'}"/>`;
+  $('goTxt').textContent = st === 'on' ? 'قطع اتصال' : st === 'busy' ? 'در حال اتصال...' : name ? 'اتصال' : 'انتخاب کانفیگ';
+  $('go').disabled = st === 'busy';
+  const port = st === 'on' && status?.localPort;
+  $('copy').disabled = !port;
+  $('copyK').textContent = port ? '127.0.0.1:' + port : '--';
+  renderQuit();
+}
+
+function renderQuit() {
+  const armed = Date.now() < quitArm;
+  $('quit').classList.toggle('ask', armed);
+  $('quitTxt').textContent = armed ? 'مطمئنی؟ دوباره بزن' : 'خروج کامل از برنامه';
+  $('quitK').textContent = armed ? 'VPN هم قطع می‌شه' : st === 'on' ? 'VPN قطع می‌شه' : '';
+}
+
+function draw(id, arr, color) {
+  const c = $(id), r = devicePixelRatio || 1, w = c.clientWidth, h = c.clientHeight;
+  if (!w) return;
+  c.width = w * r; c.height = h * r;
+  const g = c.getContext('2d'); g.scale(r, r);
+  const max = Math.max(1024, ...arr), step = w / (arr.length - 1);
+  const pts = arr.map((v, i) => [w - i * step, h - 2 - (v / max) * (h - 4)]); // RTL: newest on the right
+  g.beginPath(); pts.forEach(([x, y], i) => i ? g.lineTo(x, y) : g.moveTo(x, y));
+  g.strokeStyle = color; g.lineWidth = 1.6; g.lineJoin = 'round'; g.stroke();
+  g.lineTo(pts.at(-1)[0], h); g.lineTo(pts[0][0], h); g.closePath();
+  const grd = g.createLinearGradient(0, 0, 0, h); grd.addColorStop(0, color.replace(')', ' / .28)')); grd.addColorStop(1, color.replace(')', ' / 0)'));
+  g.fillStyle = grd; g.fill();
+}
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function drawSpeed() { if (st === 'on') { draw('cDn', hist.dn, css('--good')); draw('cUp', hist.up, css('--y')); } }
+
+let toastT;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1600); }
+
+async function refresh() {
+  try { status = await invoke('vpn_status'); } catch { status = null; }
+  if (status) st = 'on'; else if (st === 'on') st = 'off';
+  render(); drawSpeed();
+}
+
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-a]'); if (!b || b.disabled) return;
+  const a = b.dataset.a;
+  if (a === 'toggle') {
+    if (st === 'off' && !selectedName()) return act('goto:tunnel');
+    if (st === 'off') { st = 'busy'; render(); }
+    return act('toggle');
+  }
+  if (a === 'copy') {
+    navigator.clipboard?.writeText($('copyK').textContent).then(() => toast('آدرس پروکسی کپی شد'), () => toast('کپی نشد'));
+    return;
+  }
+  if (a === 'quit') {
+    if (st === 'on' && Date.now() >= quitArm) { quitArm = Date.now() + 3000; renderQuit(); setTimeout(renderQuit, 3050); return; }
+    return act('quit');
+  }
+  act(a);
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') act('hide'); });
+document.addEventListener('contextmenu', e => e.preventDefault());
+
+setInterval(() => { if (st === 'on' && status && $('dur')) $('dur').textContent = fmtDur(Date.now() - status.since); }, 1000);
+
+if (IN_APP) {
+  T.app?.getVersion?.().then(v => $('ver').textContent = 'v' + v).catch(() => {});
+  listen('traymenu://open', () => {
+    quitArm = 0;
+    const c = $('card'); c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop');
+    refresh();
+  });
+  listen('tray://vpn', e => {
+    st = e.payload.state;
+    if (st === 'on') refresh(); else { if (st === 'off') { status = null; check = null; hist.dn.fill(0); hist.up.fill(0); } render(); }
+  });
+  listen('vpn://state', e => { status = e.payload.status; if (!status) check = null; st = status ? 'on' : st === 'busy' && !e.payload.error ? 'busy' : 'off'; render(); drawSpeed(); });
+  listen('vpn://check', e => { check = e.payload; render(); });
+  listen('vpn://stats', e => {
+    const { up, down } = e.payload;
+    hist.dn.unshift(down); hist.dn.pop(); hist.up.unshift(up); hist.up.pop();
+    $('dn').textContent = fmtRate(down); $('up').textContent = fmtRate(up);
+    drawSpeed();
+  });
+  // the main window's connect may fail before the core starts (no tray event then)
+  setInterval(() => { if (st === 'busy') invoke('vpn_status').then(s => { if (s) { status = s; st = 'on'; render(); } }).catch(() => {}); }, 2500);
+  refresh();
+} else render();
+</script>
+</body>
+</html>
