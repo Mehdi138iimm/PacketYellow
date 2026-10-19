@@ -1,1 +1,105 @@
 
+name: PacketYellow - Introduce Bot
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: packetyellow-telegram-introduction
+  cancel-in-progress: false
+
+jobs:
+  introduce:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Send introduction once
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import os, json, subprocess
+          import urllib.request, urllib.parse
+
+          state_file = ".github/telegram-intro-state.json"
+
+          with open(state_file, encoding="utf-8") as f:
+              state = json.load(f)
+
+          if state.get("intro_sent"):
+              print("Introduction already sent.")
+              raise SystemExit(0)
+
+          message = """🟡 سلام به رفقای PacketYellow! 😂💛
+
+          من بات رسمی اطلاع‌رسانی PacketYellow هستم؛ مسئولم نذارم از خبرهای پروژه جا بمونید! 🤖🚀
+
+          🎯 کار من چیه؟
+          🚀 خبر انتشار نسخه‌های جدید
+          📝 اعلام تغییرات هر نسخه
+          🔗 ارائهٔ لینک صفحهٔ انتشار و فایل‌های دانلود
+          🗑️ تلاش برای حذف پیام مربوط به Release حذف‌شده، در صورت امکان
+
+          🌐 سایت رسمی:
+          https://mehdi138iimm.github.io/PacketYellow/
+
+          💻 مخزن GitHub:
+          https://github.com/Mehdi138iimm/PacketYellow
+
+          📢 کانال رسمی:
+          https://t.me/PacketYellow
+
+          👨‍💻 سازنده: Mehdi Jafari
+
+          خب، شما کارتون رو بکنید؛ منم حواسم به آپدیت‌ها هست! 😂🟡"""
+
+          data = urllib.parse.urlencode({
+              "chat_id": os.environ["TG_CHAT"],
+              "text": message,
+              "disable_web_page_preview": "false"
+          }).encode()
+
+          req = urllib.request.Request(
+              "https://api.telegram.org/bot"
+              + os.environ["TG_TOKEN"] + "/sendMessage",
+              data=data,
+              method="POST"
+          )
+
+          with urllib.request.urlopen(req, timeout=30) as r:
+              result = json.loads(r.read().decode())
+
+          if not result.get("ok"):
+              raise RuntimeError(str(result))
+
+          state["intro_sent"] = True
+
+          with open(state_file, "w", encoding="utf-8") as f:
+              json.dump(state, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+
+          subprocess.run(["git", "config", "user.name",
+                          "github-actions[bot]"], check=True)
+          subprocess.run(["git", "config", "user.email",
+                          "41898282+github-actions[bot]@users.noreply.github.com"],
+                         check=True)
+          subprocess.run(["git", "add", state_file], check=True)
+
+          if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode != 0:
+              subprocess.run(["git", "commit", "-m",
+                              "Record PacketYellow bot introduction"], check=True)
+              subprocess.run(["git", "push", "origin", "HEAD:main"], check=True)
+
+          print("Introduction sent successfully.")
+          PY
