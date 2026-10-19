@@ -1,0 +1,124 @@
+
+name: PacketYellow - Send Latest Release to Telegram
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  send-latest-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send latest published release to Telegram
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import os
+          import json
+          import urllib.request
+          import urllib.parse
+          import re
+
+          repo = os.environ["REPOSITORY"]
+          gh_token = os.environ["GH_TOKEN"]
+          tg_token = os.environ["TG_TOKEN"]
+          tg_chat = os.environ["TG_CHAT"]
+
+          # Get the latest published release from GitHub.
+          api_url = (
+              f"https://api.github.com/repos/{repo}/releases/latest"
+          )
+
+          request = urllib.request.Request(
+              api_url,
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {gh_token}",
+                  "X-GitHub-Api-Version": "2022-11-28"
+              }
+          )
+
+          with urllib.request.urlopen(request, timeout=30) as response:
+              release = json.loads(response.read().decode())
+
+          tag = release["tag_name"]
+          title = release.get("name") or tag
+          release_url = release["html_url"]
+          body = release.get("body") or "توضیحات این نسخه ثبت نشده است."
+          assets = release.get("assets", [])
+
+          # Clean up GitHub Markdown for a readable Telegram message.
+          body = re.sub(r'<!--.*?-->', '', body, flags=re.S)
+          body = re.sub(r'(?m)^\s{0,3}#{1,6}\s+', '', body)
+          body = re.sub(r'!\[([^\]]*)\]\([^)]+\)', r'\1', body)
+          body = re.sub(r'\[([^\]]+)\]\((https?://[^)]+)\)', r'\1', body)
+          body = re.sub(r'(\*\*|__|~~|`)', '', body)
+          body = re.sub(r'(?m)^\s*[-*+]\s+', '• ', body)
+          body = re.sub(r'\n[ \t]*\n(?:[ \t]*\n)+', '\n\n', body)
+          body = body.strip()
+
+          if not body:
+              body = "توضیحات این نسخه ثبت نشده است."
+
+          message = (
+              "🟡 PACKETYELLOW\n"
+              "━━━━━━━━━━━━━━\n\n"
+              f"🚀 نسخهٔ جدید: {title}\n"
+              f"🏷️ شماره نسخه: {tag}\n\n"
+              f"📝 تغییرات نسخه:\n\n{body}\n\n"
+              "━━━━━━━━━━━━━━\n"
+              f"🔗 مشاهدهٔ نسخه و فایل‌ها:\n{release_url}\n\n"
+          )
+
+          if assets:
+              message += "📦 فایل‌های ضمیمه‌شده:\n"
+              for asset in assets[:10]:
+                  message += (
+                      f"• {asset['name']}\n"
+                      f"{asset['browser_download_url']}\n"
+                  )
+              message += "\n"
+
+          message += (
+              "🌐 سایت رسمی:\n"
+              "https://mehdi138iimm.github.io/PacketYellow/\n\n"
+              "📢 کانال رسمی: @PacketYellow"
+          )
+
+          # Telegram sendMessage has a 4096-character limit.
+          if len(message) > 4000:
+              message = message[:3900] + (
+                  "\n\n…\n🔗 ادامه و فایل‌ها:\n" + release_url
+              )
+
+          data = urllib.parse.urlencode({
+              "chat_id": tg_chat,
+              "text": message,
+              "disable_web_page_preview": "false"
+          }).encode()
+
+          request = urllib.request.Request(
+              f"https://api.telegram.org/bot{tg_token}/sendMessage",
+              data=data,
+              method="POST"
+          )
+
+          with urllib.request.urlopen(request, timeout=30) as response:
+              result = json.loads(response.read().decode())
+
+          if not result.get("ok"):
+              raise RuntimeError(
+                  "Telegram API error: " + str(result)
+              )
+
+          print(f"Successfully sent release {tag} to Telegram.")
+          PY
