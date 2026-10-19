@@ -1,1 +1,141 @@
 
+name: PacketYellow Telegram Notifications
+
+on:
+  release:
+    types: [published, deleted]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: packetyellow-telegram
+  cancel-in-progress: false
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Send release notification
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          EVENT_ACTION: ${{ github.event.action || 'manual' }}
+          RELEASE_ID: ${{ github.event.release.id || '' }}
+          RELEASE_TAG: ${{ github.event.release.tag_name || 'تست دستی' }}
+          RELEASE_URL: ${{ github.event.release.html_url || format('https://github.com/{0}/releases', github.repository) }}
+          RELEASE_BODY: ${{ github.event.release.body || 'این یک پیام آزمایشی است.' }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          import os, re, json, subprocess
+          import urllib.request, urllib.parse
+
+          token = os.environ["TG_TOKEN"]
+          chat = os.environ["TG_CHAT"]
+          action = os.environ["EVENT_ACTION"]
+          release_id = os.environ["RELEASE_ID"]
+          tag = os.environ["RELEASE_TAG"]
+          url = os.environ["RELEASE_URL"]
+          body = os.environ["RELEASE_BODY"]
+          repo = os.environ["REPOSITORY"]
+          map_file = ".github/telegram-message-map.json"
+
+          def telegram(method, fields):
+              data = urllib.parse.urlencode(fields).encode()
+              req = urllib.request.Request(
+                  f"https://api.telegram.org/bot{token}/{method}",
+                  data=data,
+                  method="POST"
+              )
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  result = json.loads(r.read().decode())
+              if not result.get("ok"):
+                  raise RuntimeError(str(result))
+              return result["result"]
+
+          with open(map_file, encoding="utf-8") as f:
+              mapping = json.load(f)
+
+          if action == "deleted":
+              key = str(release_id)
+              entry = mapping.get(key)
+              if not entry:
+                  print("No saved message for deleted release.")
+                  raise SystemExit(0)
+
+              telegram("deleteMessage", {
+                  "chat_id": entry["chat_id"],
+                  "message_id": entry["message_id"]
+              })
+              del mapping[key]
+
+          else:
+              if action == "manual":
+                  tag = "تست دستی"
+                  url = f"https://github.com/{repo}/releases"
+                  body = "این یک پیام آزمایشی از PacketYellow است."
+              elif action != "published":
+                  raise SystemExit(f"Unsupported event: {action}")
+
+              body = re.sub(r'<!--.*?-->', '', body, flags=re.S)
+              body = re.sub(r'(?m)^\s{0,3}#{1,6}\s+', '', body)
+              body = re.sub(r'!\[([^\]]*)\]\([^)]+\)', r'\1', body)
+              body = re.sub(r'\[([^\]]+)\]\((https?://[^)]+)\)', r'\1', body)
+              body = re.sub(r'(\*\*|__|~~|`)', '', body)
+              body = re.sub(r'(?m)^\s*[-*+]\s+', '• ', body)
+              body = re.sub(r'\n[ \t]*\n(?:[ \t]*\n)+', '\n\n', body)
+              body = body.strip() or "جزئیات این نسخه هنوز ثبت نشده است."
+
+              message = (
+                  "🟡 PACKETYELLOW\n"
+                  "━━━━━━━━━━━━━━\n\n"
+                  f"🚀 نسخهٔ جدید {tag} منتشر شد!\n\n"
+                  f"📝 تغییرات نسخه:\n\n{body}\n\n"
+                  "━━━━━━━━━━━━━━\n"
+                  f"🔗 مشاهدهٔ نسخه و فایل‌ها:\n{url}\n\n"
+                  "🌐 وب‌سایت رسمی:\n"
+                  "https://mehdi138iimm.github.io/PacketYellow/\n\n"
+                  "💛 کانال رسمی: @PacketYellow"
+              )
+
+              sent = telegram("sendMessage", {
+                  "chat_id": chat,
+                  "text": message,
+                  "disable_web_page_preview": "false"
+              })
+
+              if action == "published" and release_id:
+                  mapping[str(release_id)] = {
+                      "tag": tag,
+                      "chat_id": sent["chat"]["id"],
+                      "message_id": sent["message_id"]
+                  }
+
+          with open(map_file, "w", encoding="utf-8") as f:
+              json.dump(mapping, f, ensure_ascii=False, indent=2)
+              f.write("\n")
+
+          subprocess.run(["git", "config", "user.name",
+                          "github-actions[bot]"], check=True)
+          subprocess.run(["git", "config", "user.email",
+                          "41898282+github-actions[bot]@users.noreply.github.com"],
+                         check=True)
+          subprocess.run(["git", "add", map_file], check=True)
+
+          if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode != 0:
+              subprocess.run(["git", "commit", "-m",
+                              "Update Telegram release message map"], check=True)
+              subprocess.run(["git", "push", "origin", "HEAD:main"], check=True)
+
+          print("PacketYellow Telegram workflow completed.")
+          PY
