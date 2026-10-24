@@ -1,0 +1,4 @@
+# Python caches (bot scripts)
+__pycache__/
+*.py[cod]
+.pytest_cache/

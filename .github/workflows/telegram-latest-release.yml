@@ -1,124 +1,101 @@
+# PacketYellow · Send Latest Release (Manual)
+#
+# Convenience button: posts the newest release (pre-releases included) without
+# waiting for a release event.  Same bot, same formatting, same state file as
+# the automatic workflow — running it twice never duplicates a post.
+#
+# Required secrets: TG_TOKEN, TG_CHAT (see .github/telegram/README.md).
 
-name: PacketYellow - Send Latest Release to Telegram
+name: PacketYellow · Send Latest Release
 
 on:
   workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "فقط پیش‌نمایش؛ هیچ پیامی ارسال نمی‌شود"
+        type: boolean
+        default: false
+      force:
+        description: "ارسال دوباره حتی اگر قبلاً ارسال شده باشد"
+        type: boolean
+        default: false
+      silent:
+        description: "ارسال بدون نوتیفیکیشن صوتی"
+        type: boolean
+        default: false
+      chat:
+        description: "ارسال به مقصد دیگر (خالی = مقدار TG_CHAT)"
+        required: false
+        default: ""
 
 permissions:
-  contents: read
+  contents: write
+
+concurrency:
+  group: packetyellow-telegram
+  cancel-in-progress: false
+
+env:
+  PYTHONUNBUFFERED: "1"
+  PYTHONIOENCODING: "utf-8"
 
 jobs:
-  send-latest-release:
+  send:
+    name: Send latest release to Telegram
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
-      - name: Send latest published release to Telegram
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send latest release
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
+          THREAD_ID: ${{ secrets.TG_THREAD_ID }}
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+          MODE: latest
+          FORCE: ${{ inputs.force }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          SILENT: ${{ inputs.silent }}
+          CHAT_OVERRIDE: ${{ inputs.chat }}
+        run: python .github/scripts/telegram_bot.py
+
+      - name: Persist bot state
+        if: always()
+        continue-on-error: true
         run: |
           set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          python3 - <<'PY'
-          import os
-          import json
-          import urllib.request
-          import urllib.parse
-          import re
+          if git diff --quiet -- .github/telegram-message-map.json; then
+            echo "No bot state change to persist."
+            exit 0
+          fi
 
-          repo = os.environ["REPOSITORY"]
-          gh_token = os.environ["GH_TOKEN"]
-          tg_token = os.environ["TG_TOKEN"]
-          tg_chat = os.environ["TG_CHAT"]
+          git add .github/telegram-message-map.json
+          git commit -m "chore(telegram): update bot state [skip ci]"
 
-          # Get the latest published release from GitHub.
-          api_url = (
-              f"https://api.github.com/repos/{repo}/releases/latest"
-          )
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "Bot state persisted."
+              exit 0
+            fi
+            echo "Push failed (attempt ${attempt}); rebasing and retrying…"
+            git fetch origin main
+            git rebase --autostash origin/main || git rebase --abort || true
+            sleep 5
+          done
 
-          request = urllib.request.Request(
-              api_url,
-              headers={
-                  "Accept": "application/vnd.github+json",
-                  "Authorization": f"Bearer {gh_token}",
-                  "X-GitHub-Api-Version": "2022-11-28"
-              }
-          )
-
-          with urllib.request.urlopen(request, timeout=30) as response:
-              release = json.loads(response.read().decode())
-
-          tag = release["tag_name"]
-          title = release.get("name") or tag
-          release_url = release["html_url"]
-          body = release.get("body") or "توضیحات این نسخه ثبت نشده است."
-          assets = release.get("assets", [])
-
-          # Clean up GitHub Markdown for a readable Telegram message.
-          body = re.sub(r'<!--.*?-->', '', body, flags=re.S)
-          body = re.sub(r'(?m)^\s{0,3}#{1,6}\s+', '', body)
-          body = re.sub(r'!\[([^\]]*)\]\([^)]+\)', r'\1', body)
-          body = re.sub(r'\[([^\]]+)\]\((https?://[^)]+)\)', r'\1', body)
-          body = re.sub(r'(\*\*|__|~~|`)', '', body)
-          body = re.sub(r'(?m)^\s*[-*+]\s+', '• ', body)
-          body = re.sub(r'\n[ \t]*\n(?:[ \t]*\n)+', '\n\n', body)
-          body = body.strip()
-
-          if not body:
-              body = "توضیحات این نسخه ثبت نشده است."
-
-          message = (
-              "🟡 PACKETYELLOW\n"
-              "━━━━━━━━━━━━━━\n\n"
-              f"🚀 نسخهٔ جدید: {title}\n"
-              f"🏷️ شماره نسخه: {tag}\n\n"
-              f"📝 تغییرات نسخه:\n\n{body}\n\n"
-              "━━━━━━━━━━━━━━\n"
-              f"🔗 مشاهدهٔ نسخه و فایل‌ها:\n{release_url}\n\n"
-          )
-
-          if assets:
-              message += "📦 فایل‌های ضمیمه‌شده:\n"
-              for asset in assets[:10]:
-                  message += (
-                      f"• {asset['name']}\n"
-                      f"{asset['browser_download_url']}\n"
-                  )
-              message += "\n"
-
-          message += (
-              "🌐 سایت رسمی:\n"
-              "https://mehdi138iimm.github.io/PacketYellow/\n\n"
-              "📢 کانال رسمی: @PacketYellow"
-          )
-
-          # Telegram sendMessage has a 4096-character limit.
-          if len(message) > 4000:
-              message = message[:3900] + (
-                  "\n\n…\n🔗 ادامه و فایل‌ها:\n" + release_url
-              )
-
-          data = urllib.parse.urlencode({
-              "chat_id": tg_chat,
-              "text": message,
-              "disable_web_page_preview": "false"
-          }).encode()
-
-          request = urllib.request.Request(
-              f"https://api.telegram.org/bot{tg_token}/sendMessage",
-              data=data,
-              method="POST"
-          )
-
-          with urllib.request.urlopen(request, timeout=30) as response:
-              result = json.loads(response.read().decode())
-
-          if not result.get("ok"):
-              raise RuntimeError(
-                  "Telegram API error: " + str(result)
-              )
-
-          print(f"Successfully sent release {tag} to Telegram.")
-          PY
+          echo "::warning::Could not push the bot state file. The Telegram post was already sent, but duplicate protection is stale."

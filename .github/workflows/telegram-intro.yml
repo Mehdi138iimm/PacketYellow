@@ -1,105 +1,96 @@
+# PacketYellow · Introduce Bot
+#
+# Posts the one-time introduction message.  The intro is recorded in
+# .github/telegram-intro-state.json, so repeated runs do nothing unless
+# "force" is checked.
+#
+# Required secrets: TG_TOKEN, TG_CHAT (see .github/telegram/README.md).
 
-name: PacketYellow - Introduce Bot
+name: PacketYellow · Introduce Bot
 
 on:
   workflow_dispatch:
+    inputs:
+      force:
+        description: "ارسال دوبارهٔ پیام معرفی (حتی اگر قبلاً ارسال شده باشد)"
+        type: boolean
+        default: false
+      dry_run:
+        description: "فقط پیش‌نمایش؛ هیچ پیامی ارسال نمی‌شود"
+        type: boolean
+        default: false
+      chat:
+        description: "ارسال به مقصد دیگر (خالی = مقدار TG_CHAT)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
 
 concurrency:
-  group: packetyellow-telegram-introduction
+  group: packetyellow-telegram
   cancel-in-progress: false
+
+env:
+  PYTHONUNBUFFERED: "1"
+  PYTHONIOENCODING: "utf-8"
 
 jobs:
   introduce:
+    name: Send introduction message
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 1
 
-      - name: Send introduction once
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send introduction
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
+          THREAD_ID: ${{ secrets.TG_THREAD_ID }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          MODE: intro
+          FORCE: ${{ inputs.force }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          CHAT_OVERRIDE: ${{ inputs.chat }}
+        run: python .github/scripts/telegram_bot.py
+
+      - name: Persist bot state
+        if: always()
+        continue-on-error: true
         run: |
           set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          python3 - <<'PY'
-          import os, json, subprocess
-          import urllib.request, urllib.parse
+          if git diff --quiet -- .github/telegram-intro-state.json; then
+            echo "No bot state change to persist."
+            exit 0
+          fi
 
-          state_file = ".github/telegram-intro-state.json"
+          git add .github/telegram-intro-state.json
+          git commit -m "chore(telegram): record introduction [skip ci]"
 
-          with open(state_file, encoding="utf-8") as f:
-              state = json.load(f)
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "Bot state persisted."
+              exit 0
+            fi
+            echo "Push failed (attempt ${attempt}); rebasing and retrying…"
+            git fetch origin main
+            git rebase --autostash origin/main || git rebase --abort || true
+            sleep 5
+          done
 
-          if state.get("intro_sent"):
-              print("Introduction already sent.")
-              raise SystemExit(0)
-
-          message = """🟡 سلام به رفقای PacketYellow! 😂💛
-
-          من بات رسمی اطلاع‌رسانی PacketYellow هستم؛ مسئولم نذارم از خبرهای پروژه جا بمونید! 🤖🚀
-
-          🎯 کار من چیه؟
-          🚀 خبر انتشار نسخه‌های جدید
-          📝 اعلام تغییرات هر نسخه
-          🔗 ارائهٔ لینک صفحهٔ انتشار و فایل‌های دانلود
-          🗑️ تلاش برای حذف پیام مربوط به Release حذف‌شده، در صورت امکان
-
-          🌐 سایت رسمی:
-          https://mehdi138iimm.github.io/PacketYellow/
-
-          💻 مخزن GitHub:
-          https://github.com/Mehdi138iimm/PacketYellow
-
-          📢 کانال رسمی:
-          https://t.me/PacketYellow
-
-          👨‍💻 سازنده: Mehdi Jafari
-
-          خب، شما کارتون رو بکنید؛ منم حواسم به آپدیت‌ها هست! 😂🟡"""
-
-          data = urllib.parse.urlencode({
-              "chat_id": os.environ["TG_CHAT"],
-              "text": message,
-              "disable_web_page_preview": "false"
-          }).encode()
-
-          req = urllib.request.Request(
-              "https://api.telegram.org/bot"
-              + os.environ["TG_TOKEN"] + "/sendMessage",
-              data=data,
-              method="POST"
-          )
-
-          with urllib.request.urlopen(req, timeout=30) as r:
-              result = json.loads(r.read().decode())
-
-          if not result.get("ok"):
-              raise RuntimeError(str(result))
-
-          state["intro_sent"] = True
-
-          with open(state_file, "w", encoding="utf-8") as f:
-              json.dump(state, f, ensure_ascii=False, indent=2)
-              f.write("\n")
-
-          subprocess.run(["git", "config", "user.name",
-                          "github-actions[bot]"], check=True)
-          subprocess.run(["git", "config", "user.email",
-                          "41898282+github-actions[bot]@users.noreply.github.com"],
-                         check=True)
-          subprocess.run(["git", "add", state_file], check=True)
-
-          if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode != 0:
-              subprocess.run(["git", "commit", "-m",
-                              "Record PacketYellow bot introduction"], check=True)
-              subprocess.run(["git", "push", "origin", "HEAD:main"], check=True)
-
-          print("Introduction sent successfully.")
-          PY
+          echo "::warning::Could not push the intro state file."
