@@ -1,10 +1,51 @@
+# PacketYellow · Telegram Release Bot
+#
+# Automatically posts every published release to Telegram and keeps that post in
+# sync (edit / delete).  Everything can also be triggered by hand from the
+# "Run workflow" button, including a dry-run preview that sends nothing.
+#
+# Required repository secrets:
+#   TG_TOKEN  – bot token from @BotFather
+#   TG_CHAT   – destination chat, e.g. @PacketYellow or -1001234567890
+# Optional:
+#   TG_THREAD_ID – topic id when posting into a forum group
+#
+# The bot logic lives in .github/scripts/telegram_bot.py (stdlib only, tested in
+# .github/workflows/telegram-bot-tests.yml).  See .github/telegram/README.md.
 
-name: PacketYellow Telegram Notifications
+name: PacketYellow · Telegram Release Bot
 
 on:
   release:
-    types: [published, deleted]
+    types: [published, prereleased, released, edited, deleted]
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "auto = از رویداد فعلی | latest | tag | intro | doctor"
+        type: choice
+        options: [auto, latest, tag, intro, doctor]
+        default: auto
+        required: true
+      tag:
+        description: "برچسب نسخه برای mode=tag (مثلاً v1.7.0)"
+        required: false
+        default: ""
+      force:
+        description: "ارسال دوباره حتی اگر قبلاً ارسال شده باشد"
+        type: boolean
+        default: false
+      dry_run:
+        description: "فقط پیش‌نمایش؛ هیچ پیامی ارسال نمی‌شود"
+        type: boolean
+        default: false
+      silent:
+        description: "ارسال بدون نوتیفیکیشن صوتی"
+        type: boolean
+        default: false
+      chat:
+        description: "ارسال به مقصد دیگر (خالی = مقدار TG_CHAT)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -13,129 +54,70 @@ concurrency:
   group: packetyellow-telegram
   cancel-in-progress: false
 
+env:
+  PYTHONUNBUFFERED: "1"
+  PYTHONIOENCODING: "utf-8"
+
 jobs:
   notify:
+    name: Send release notification
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 1
 
-      - name: Send release notification
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send Telegram notification
         env:
           TG_TOKEN: ${{ secrets.TG_TOKEN }}
           TG_CHAT: ${{ secrets.TG_CHAT }}
-          EVENT_ACTION: ${{ github.event.action || 'manual' }}
-          RELEASE_ID: ${{ github.event.release.id || '' }}
-          RELEASE_TAG: ${{ github.event.release.tag_name || 'تست دستی' }}
-          RELEASE_URL: ${{ github.event.release.html_url || format('https://github.com/{0}/releases', github.repository) }}
-          RELEASE_BODY: ${{ github.event.release.body || 'این یک پیام آزمایشی است.' }}
+          THREAD_ID: ${{ secrets.TG_THREAD_ID }}
+          GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
+          MODE: ${{ inputs.mode || 'auto' }}
+          TAG: ${{ inputs.tag }}
+          FORCE: ${{ inputs.force }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          SILENT: ${{ inputs.silent }}
+          CHAT_OVERRIDE: ${{ inputs.chat }}
+        run: python .github/scripts/telegram_bot.py
+
+      - name: Persist bot state
+        # Runs even when the send step failed, so partially sent posts are still
+        # remembered and never duplicated by a retry.
+        if: always()
+        continue-on-error: true
         run: |
           set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          python3 - <<'PY'
-          import os, re, json, subprocess
-          import urllib.request, urllib.parse
+          if git diff --quiet -- .github/telegram-message-map.json .github/telegram-intro-state.json; then
+            echo "No bot state change to persist."
+            exit 0
+          fi
 
-          token = os.environ["TG_TOKEN"]
-          chat = os.environ["TG_CHAT"]
-          action = os.environ["EVENT_ACTION"]
-          release_id = os.environ["RELEASE_ID"]
-          tag = os.environ["RELEASE_TAG"]
-          url = os.environ["RELEASE_URL"]
-          body = os.environ["RELEASE_BODY"]
-          repo = os.environ["REPOSITORY"]
-          map_file = ".github/telegram-message-map.json"
+          git add .github/telegram-message-map.json .github/telegram-intro-state.json
+          git commit -m "chore(telegram): update bot state [skip ci]"
 
-          def telegram(method, fields):
-              data = urllib.parse.urlencode(fields).encode()
-              req = urllib.request.Request(
-                  f"https://api.telegram.org/bot{token}/{method}",
-                  data=data,
-                  method="POST"
-              )
-              with urllib.request.urlopen(req, timeout=30) as r:
-                  result = json.loads(r.read().decode())
-              if not result.get("ok"):
-                  raise RuntimeError(str(result))
-              return result["result"]
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "Bot state persisted."
+              exit 0
+            fi
+            echo "Push failed (attempt ${attempt}); rebasing and retrying…"
+            git fetch origin main
+            git rebase --autostash origin/main || git rebase --abort || true
+            sleep 5
+          done
 
-          with open(map_file, encoding="utf-8") as f:
-              mapping = json.load(f)
-
-          if action == "deleted":
-              key = str(release_id)
-              entry = mapping.get(key)
-              if not entry:
-                  print("No saved message for deleted release.")
-                  raise SystemExit(0)
-
-              telegram("deleteMessage", {
-                  "chat_id": entry["chat_id"],
-                  "message_id": entry["message_id"]
-              })
-              del mapping[key]
-
-          else:
-              if action == "manual":
-                  tag = "تست دستی"
-                  url = f"https://github.com/{repo}/releases"
-                  body = "این یک پیام آزمایشی از PacketYellow است."
-              elif action != "published":
-                  raise SystemExit(f"Unsupported event: {action}")
-
-              body = re.sub(r'<!--.*?-->', '', body, flags=re.S)
-              body = re.sub(r'(?m)^\s{0,3}#{1,6}\s+', '', body)
-              body = re.sub(r'!\[([^\]]*)\]\([^)]+\)', r'\1', body)
-              body = re.sub(r'\[([^\]]+)\]\((https?://[^)]+)\)', r'\1', body)
-              body = re.sub(r'(\*\*|__|~~|`)', '', body)
-              body = re.sub(r'(?m)^\s*[-*+]\s+', '• ', body)
-              body = re.sub(r'\n[ \t]*\n(?:[ \t]*\n)+', '\n\n', body)
-              body = body.strip() or "جزئیات این نسخه هنوز ثبت نشده است."
-
-              message = (
-                  "🟡 PACKETYELLOW\n"
-                  "━━━━━━━━━━━━━━\n\n"
-                  f"🚀 نسخهٔ جدید {tag} منتشر شد!\n\n"
-                  f"📝 تغییرات نسخه:\n\n{body}\n\n"
-                  "━━━━━━━━━━━━━━\n"
-                  f"🔗 مشاهدهٔ نسخه و فایل‌ها:\n{url}\n\n"
-                  "🌐 وب‌سایت رسمی:\n"
-                  "https://mehdi138iimm.github.io/PacketYellow/\n\n"
-                  "💛 کانال رسمی: @PacketYellow"
-              )
-
-              sent = telegram("sendMessage", {
-                  "chat_id": chat,
-                  "text": message,
-                  "disable_web_page_preview": "false"
-              })
-
-              if action == "published" and release_id:
-                  mapping[str(release_id)] = {
-                      "tag": tag,
-                      "chat_id": sent["chat"]["id"],
-                      "message_id": sent["message_id"]
-                  }
-
-          with open(map_file, "w", encoding="utf-8") as f:
-              json.dump(mapping, f, ensure_ascii=False, indent=2)
-              f.write("\n")
-
-          subprocess.run(["git", "config", "user.name",
-                          "github-actions[bot]"], check=True)
-          subprocess.run(["git", "config", "user.email",
-                          "41898282+github-actions[bot]@users.noreply.github.com"],
-                         check=True)
-          subprocess.run(["git", "add", map_file], check=True)
-
-          if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode != 0:
-              subprocess.run(["git", "commit", "-m",
-                              "Update Telegram release message map"], check=True)
-              subprocess.run(["git", "push", "origin", "HEAD:main"], check=True)
-
-          print("PacketYellow Telegram workflow completed.")
-          PY
+          echo "::warning::Could not push the bot state file. The Telegram post was already sent, but duplicate protection is stale. Check Settings → Actions → Workflow permissions (needs Read and write)."

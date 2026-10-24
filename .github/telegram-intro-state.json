@@ -1,3 +1,5 @@
 {
-  "intro_sent": true
+  "version": 2,
+  "intro_sent": true,
+  "chats": {}
 }
