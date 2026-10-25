@@ -1,0 +1,101 @@
+# PacketYellow · Send Latest Release (Manual)
+#
+# Convenience button: posts the newest release (pre-releases included) without
+# waiting for a release event.  Same bot, same formatting, same state file as
+# the automatic workflow — running it twice never duplicates a post.
+#
+# Required secrets: TG_TOKEN, TG_CHAT (see .github/telegram/README.md).
+
+name: PacketYellow · Send Latest Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "فقط پیش‌نمایش؛ هیچ پیامی ارسال نمی‌شود"
+        type: boolean
+        default: false
+      force:
+        description: "ارسال دوباره حتی اگر قبلاً ارسال شده باشد"
+        type: boolean
+        default: false
+      silent:
+        description: "ارسال بدون نوتیفیکیشن صوتی"
+        type: boolean
+        default: false
+      chat:
+        description: "ارسال به مقصد دیگر (خالی = مقدار TG_CHAT)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: packetyellow-telegram
+  cancel-in-progress: false
+
+env:
+  PYTHONUNBUFFERED: "1"
+  PYTHONIOENCODING: "utf-8"
+
+jobs:
+  send:
+    name: Send latest release to Telegram
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Send latest release
+        env:
+          TG_TOKEN: ${{ secrets.TG_TOKEN }}
+          TG_CHAT: ${{ secrets.TG_CHAT }}
+          THREAD_ID: ${{ secrets.TG_THREAD_ID }}
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          MODE: latest
+          FORCE: ${{ inputs.force }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          SILENT: ${{ inputs.silent }}
+          CHAT_OVERRIDE: ${{ inputs.chat }}
+        run: python .github/scripts/telegram_bot.py
+
+      - name: Persist bot state
+        if: always()
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- .github/telegram-message-map.json; then
+            echo "No bot state change to persist."
+            exit 0
+          fi
+
+          git add .github/telegram-message-map.json
+          git commit -m "chore(telegram): update bot state [skip ci]"
+
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "Bot state persisted."
+              exit 0
+            fi
+            echo "Push failed (attempt ${attempt}); rebasing and retrying…"
+            git fetch origin main
+            git rebase --autostash origin/main || git rebase --abort || true
+            sleep 5
+          done
+
+          echo "::warning::Could not push the bot state file. The Telegram post was already sent, but duplicate protection is stale."
