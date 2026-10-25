@@ -1474,6 +1474,13 @@ def run_doctor(config: Config) -> int:
     failures = 0
     warnings = 0
 
+    def annotate(level: str, title: str, detail: str) -> None:
+        """Surface a check result as a GitHub Actions annotation (no logs needed)."""
+        if os.environ.get("GITHUB_ACTIONS") != "true":
+            return
+        summary = " ".join(str(detail).split())
+        print(f"::{level} title={title}::{summary}", flush=True)
+
     def check(ok: bool, title: str, detail: str, *, critical: bool = True) -> None:
         nonlocal failures, warnings
         if ok:
@@ -1481,9 +1488,11 @@ def run_doctor(config: Config) -> int:
         elif critical:
             icon = "❌"
             failures += 1
+            annotate("error", title, detail)
         else:
             icon = "⚠️"
             warnings += 1
+            annotate("warning", title, detail)
         lines.append(f"- {icon} **{title}** — {detail}")
         log(f"{icon} {title}: {detail}")
 
