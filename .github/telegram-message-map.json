@@ -1,5 +1,19 @@
 {
   "version": 2,
-  "updated_at": "",
-  "releases": {}
+  "updated_at": "2026-10-25T01:51:20+00:00",
+  "releases": {
+    "422975580": {
+      "chats": {
+        "@PacketYellow": {
+          "message_ids": [
+            24
+          ],
+          "updated_at": "2026-10-25T01:51:20+00:00"
+        }
+      },
+      "tag": "v1.7.0",
+      "title": "PacketYellow v1.7.0",
+      "sent_at": "2026-10-25T01:51:20+00:00"
+    }
+  }
 }
